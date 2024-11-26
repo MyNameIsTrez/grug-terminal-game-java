@@ -1,12 +1,5 @@
-adapter.o
-bar.o
-Foo.class
-Foo.h
-foo.o
 Game.class
 Game.h
-global_library_loader.o
 libadapter.so
-libbar.so
-libfoo.so
 libglobal_library_loader.so
+libmod.so

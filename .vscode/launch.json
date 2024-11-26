@@ -6,7 +6,7 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Game",
+            "name": "Run",
             "request": "launch",
             "mainClass": "Game",
             "vmArgs": "-Djava.library.path=.:grug",

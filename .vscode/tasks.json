@@ -2,6 +2,18 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Recompile",
+            "dependsOn": [
+                "Compile libgrug.so",
+                "Compile Game.class and Game.h",
+                "Compile libglobal_library_loader.so",
+                "Compile libadapter.so",
+                "Compile libmod.so",
+            ],
+            "dependsOrder": "sequence",
+            "group": "build"
+        },
+        {
             "label": "Compile libgrug.so",
             "command": "gcc",
             "type": "shell",
@@ -18,16 +30,61 @@
                 "-Wfatal-errors",
                 "-g",
                 "-rdynamic",
-                // "-fsanitize=address,undefined",
             ],
-            "problemMatcher": [
-                "$tsc"
+            "hide": true
+        },
+        {
+            "label": "Compile Game.class and Game.h",
+            "command": "javac",
+            "type": "shell",
+            "args": [
+                "-h",
+                ".",
+                "Game.java",
             ],
-            "presentation": {
-                "reveal": "always",
-                "clear": true
-            },
-            "group": "build"
-        }
+            "hide": true
+        },
+        {
+            "label": "Compile libglobal_library_loader.so",
+            "command": "gcc",
+            "type": "shell",
+            "args": [
+                "global_library_loader.c",
+                "-o",
+                "libglobal_library_loader.so",
+                "-shared",
+                "-fPIC",
+                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include",
+                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux",
+            ],
+            "hide": true
+        },
+        {
+            "label": "Compile libadapter.so",
+            "command": "gcc",
+            "type": "shell",
+            "args": [
+                "adapter.c",
+                "-o",
+                "libadapter.so",
+                "-shared",
+            ],
+            "hide": true
+        },
+        {
+            "label": "Compile libmod.so",
+            "command": "gcc",
+            "type": "shell",
+            "args": [
+                "mod.c",
+                "-o",
+                "libmod.so",
+                "-shared",
+                "-fPIC",
+                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include",
+                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux",
+            ],
+            "hide": true
+        },
     ]
 }
