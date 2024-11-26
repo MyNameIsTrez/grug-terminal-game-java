@@ -1,7 +1,7 @@
-#include "Foo.h"
+#include "Game.h"
 
 void bar(void);
 
-JNIEXPORT void JNICALL Java_Foo_foo(JNIEnv *, jobject) {
+JNIEXPORT void JNICALL Java_Game_foo(JNIEnv *, jobject) {
     bar();
 }

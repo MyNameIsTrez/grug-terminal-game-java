@@ -1,15 +1,18 @@
 class Game {
-    private native boolean grug_regenerate_modified_mods();
+    private native void load_global_libraries();
+
+    private native void foo();
 
     static {
-        System.loadLibrary("grug");
+        System.loadLibrary("global_library_loader");
+        System.loadLibrary("foo");
     }
 
     public static void main(String[] args) {
         Game game = new Game();
 
-        System.out.println("foo");
-        game.grug_regenerate_modified_mods();
-        System.out.println("bar");
+        game.load_global_libraries();
+
+        game.foo();
     }
 }

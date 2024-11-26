@@ -9,7 +9,7 @@
             "name": "Game",
             "request": "launch",
             "mainClass": "Game",
-            "vmArgs": "-Djava.library.path=grug",
+            "vmArgs": "-Djava.library.path=.:grug",
             "projectName": "grug-terminal-game-java_7946e7cb"
         }
     ]
