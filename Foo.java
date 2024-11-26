@@ -1,12 +1,13 @@
 class Foo {
-    private native boolean foo();
+    private native void foo();
 
     static {
+        System.loadLibrary("bar");
         System.loadLibrary("foo");
     }
 
     public static void main(String[] args) {
         Foo foo = new Foo();
-        System.out.println(foo.foo());
+        foo.foo();
     }
 }

@@ -1,5 +1,7 @@
+bar.o
 Foo.class
 Foo.h
 foo.o
 Game.class
+libbar.so
 libfoo.so

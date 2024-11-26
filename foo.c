@@ -1,5 +1,7 @@
 #include "Foo.h"
 
-JNIEXPORT jboolean JNICALL Java_Foo_foo(JNIEnv *, jobject) {
-    return 1;
+void bar(void);
+
+JNIEXPORT void JNICALL Java_Foo_foo(JNIEnv *, jobject) {
+    bar();
 }
