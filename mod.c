@@ -1,7 +1,5 @@
-#include "Game.h"
-
 void game_fn_print_health(void);
 
-JNIEXPORT void JNICALL Java_Game_on_1fire(JNIEnv *, jobject) {
+void game_fn_on_use(void) {
     game_fn_print_health();
 }
