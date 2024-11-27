@@ -6,14 +6,52 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+typedef char* string;
+typedef int32_t i32;
+typedef uint64_t id;
+
 JNIEnv *javaEnv;
 jobject javaObject;
 
 jmethodID runtimeErrorHandler;
 
-void game_fn_print_health(void) {
-    printf("game_fn_print_health\n");
-    // TODO: Call the method printHealth() from Game.java
+void game_fn_define_human(string name, i32 health, i32 buy_gold_value, i32 kill_gold_value) {
+    // TODO: REMOVE!
+    (void)name;
+    (void)health;
+    (void)buy_gold_value;
+    (void)kill_gold_value;
+
+    assert(false);
+}
+
+void game_fn_define_tool(string name, i32 buy_gold_value) {
+    (void)name;
+    (void)buy_gold_value;
+
+    assert(false);
+}
+
+id game_fn_get_human_parent(id tool_id) {
+    // TODO: REMOVE!
+    (void)tool_id;
+
+    assert(false);
+}
+
+id game_fn_get_opponent(id human_id) {
+    // TODO: REMOVE!
+    (void)human_id;
+
+    assert(false);
+}
+
+void game_fn_change_human_health(id human_id, i32 added_health) {
+    // TODO: REMOVE!
+    (void)human_id;
+    (void)added_health;
+
+    assert(false);
 }
 
 void runtime_error_handler(char *reason, enum grug_runtime_error_type type, char *onFnName, char *onFnPath) {

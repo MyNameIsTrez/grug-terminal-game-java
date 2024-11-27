@@ -33,30 +33,49 @@ class Game {
         System.loadLibrary("global_library_loader");
         game.loadGlobalLibraries();
 
-        // System.loadLibrary("grug"); // TODO: REMOVE!
         System.loadLibrary("adapter");
-        // System.loadLibrary("mod"); // TODO: REMOVE!
 
         game.init();
 
         game.grugSetRuntimeErrorHandler();
 
-        if (game.grugRegenerateModifiedMods()) {
-            if (game.errorHasChanged()) {
-                if (game.loadingErrorInGrugFile()) {
-                    System.err.println("grug loading error: " + game.errorMsg() + ", in " + game.errorPath()
-                            + " (detected in grug.c:" + game.errorGrugCLineNumber() + ")");
-                } else {
-                    System.err.println("grug loading error: " + game.errorMsg() + " (detected in grug.c:"
-                            + game.errorGrugCLineNumber() + ")");
+        while (true) {
+            if (game.grugRegenerateModifiedMods()) {
+                if (game.errorHasChanged()) {
+                    if (game.loadingErrorInGrugFile()) {
+                        System.err.println("grug loading error: " + game.errorMsg() + ", in " + game.errorPath()
+                                + " (detected in grug.c:" + game.errorGrugCLineNumber() + ")");
+                    } else {
+                        System.err.println("grug loading error: " + game.errorMsg() + " (detected in grug.c:"
+                                + game.errorGrugCLineNumber() + ")");
+                    }
                 }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+                continue;
             }
-            System.exit(1);
+
+            // TODO: Call reloadModifiedEntities()
+
+            // long onFns = 0x42; // TODO: Unhardcode
+
+            // game.tool_onUse(onFns);
+
+            // TODO: Call update()
+
+            System.out.println();
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
-
-        long onFns = 0x42; // TODO: Unhardcode
-
-        game.tool_onUse(onFns);
     }
 
     public void printHealth() {

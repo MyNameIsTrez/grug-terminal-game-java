@@ -1,0 +1,78 @@
+{
+	"entities": {
+		"human": {
+			"description": "An actor that can fight.",
+			"fields": [
+				{
+					"name": "name",
+					"type": "string"
+				},
+				{
+					"name": "health",
+					"type": "i32"
+				},
+				{
+					"name": "buy_gold_value",
+					"type": "i32"
+				},
+				{
+					"name": "kill_gold_value",
+					"type": "i32"
+				}
+			]
+		},
+		"tool": {
+			"description": "Used by actors to fight each other.",
+			"fields": [
+				{
+					"name": "name",
+					"type": "string"
+				},
+				{
+					"name": "buy_gold_value",
+					"type": "i32"
+				}
+			],
+			"on_functions": {
+				"on_use": {
+					"description": "Called whenever this tool gets used in a fight."
+				}
+			}
+		}
+	},
+	"game_functions": {
+		"get_human_parent": {
+			"description": "Get the human parent's ID",
+			"return_type": "id",
+			"arguments": [
+				{
+					"name": "tool_id",
+					"type": "id"
+				}
+			]
+		},
+		"get_opponent": {
+			"description": "Get the opponent's ID",
+			"return_type": "id",
+			"arguments": [
+				{
+					"name": "human_id",
+					"type": "id"
+				}
+			]
+		},
+		"change_human_health": {
+			"description": "Change a human's health",
+			"arguments": [
+				{
+					"name": "human_id",
+					"type": "id"
+				},
+				{
+					"name": "added_health",
+					"type": "i32"
+				}
+			]
+		}
+	}
+}
