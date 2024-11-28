@@ -10,10 +10,10 @@ typedef char* string;
 typedef int32_t i32;
 typedef uint64_t id;
 
-JNIEnv *javaEnv;
-jobject javaObject;
+JNIEnv *java_env;
+jobject java_object;
 
-jmethodID runtimeErrorHandler;
+jmethodID runtime_error_handler_id;
 
 void game_fn_define_human(string name, i32 health, i32 buy_gold_value, i32 kill_gold_value) {
     // TODO: REMOVE!
@@ -56,84 +56,83 @@ void game_fn_change_human_health(id human_id, i32 added_health) {
 
 void runtime_error_handler(char *reason, enum grug_runtime_error_type type, char *onFnName, char *onFnPath) {
     // TODO: These strings should probably be freed at the end of this function
-    jstring javaReason = (*javaEnv)->NewStringUTF(javaEnv, reason);
-    jint javaType = type;
-    jstring javaOnFnName = (*javaEnv)->NewStringUTF(javaEnv, onFnName);
-    jstring javaOnFnPath = (*javaEnv)->NewStringUTF(javaEnv, onFnPath);
+    jstring java_reason = (*java_env)->NewStringUTF(java_env, reason);
+    jint java_type = type;
+    jstring java_on_fn_name = (*java_env)->NewStringUTF(java_env, onFnName);
+    jstring java_on_fn_path = (*java_env)->NewStringUTF(java_env, onFnPath);
 
-    (*javaEnv)->CallVoidMethod(javaEnv, javaObject, runtimeErrorHandler, javaReason, javaType, javaOnFnName, javaOnFnPath);
+    (*java_env)->CallVoidMethod(java_env, java_object, runtime_error_handler_id, java_reason, java_type, java_on_fn_name, java_on_fn_path);
 }
 
-JNIEXPORT void JNICALL Java_Game_grugSetRuntimeErrorHandler(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT void JNICALL Java_Game_grugSetRuntimeErrorHandler(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
 
     grug_set_runtime_error_handler(runtime_error_handler);
 }
 
-JNIEXPORT jboolean JNICALL Java_Game_errorHasChanged(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT jboolean JNICALL Java_Game_errorHasChanged(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
 
     return grug_error.has_changed;
 }
 
-JNIEXPORT jboolean JNICALL Java_Game_loadingErrorInGrugFile(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT jboolean JNICALL Java_Game_loadingErrorInGrugFile(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
 
     return grug_loading_error_in_grug_file;
 }
 
-JNIEXPORT jstring JNICALL Java_Game_errorMsg(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT jstring JNICALL Java_Game_errorMsg(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
 
     // TODO: This string should be freed at some point
     // TODO: An idea is having a global table containing the handful of possible error strings,
     // TODO: or having a single global string that gets replaced (freed) by every next error
-    return (*javaEnv)->NewStringUTF(javaEnv, grug_error.msg);
+    return (*java_env)->NewStringUTF(java_env, grug_error.msg);
 }
 
-JNIEXPORT jstring JNICALL Java_Game_errorPath(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT jstring JNICALL Java_Game_errorPath(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
 
     // TODO: This string should be freed at some point
     // TODO: An idea is having a global table containing the handful of possible error strings,
     // TODO: or having a single global string that gets replaced (freed) by every next error
-    return (*javaEnv)->NewStringUTF(javaEnv, grug_error.path);
+    return (*java_env)->NewStringUTF(java_env, grug_error.path);
 }
 
-JNIEXPORT jint JNICALL Java_Game_errorGrugCLineNumber(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT jint JNICALL Java_Game_errorGrugCLineNumber(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
 
     return grug_error.grug_c_line_number;
 }
 
-JNIEXPORT jboolean JNICALL Java_Game_grugRegenerateModifiedMods(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT jboolean JNICALL Java_Game_grugRegenerateModifiedMods(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
 
     return grug_regenerate_modified_mods();
 }
 
-JNIEXPORT void JNICALL Java_Game_init(JNIEnv *localJavaEnv, jobject localJavaObject) {
-    fprintf(stderr, "localJavaEnv in Java_Game_init(): %p\n", (void *)localJavaEnv);
-    javaEnv = localJavaEnv;
-    javaObject = localJavaObject;
+JNIEXPORT void JNICALL Java_Game_init(JNIEnv *java_env_, jobject java_object_) {
+    java_env = java_env_;
+    java_object = java_object_;
 
-    jclass javaClass = (*localJavaEnv)->GetObjectClass(localJavaEnv, localJavaObject);
+    jclass javaClass = (*java_env)->GetObjectClass(java_env, java_object);
     assert(javaClass != NULL);
 
-    runtimeErrorHandler = (*javaEnv)->GetMethodID(javaEnv, javaClass, "runtimeErrorHandler", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
-    assert(runtimeErrorHandler != NULL);
+    runtime_error_handler_id = (*java_env)->GetMethodID(java_env, javaClass, "runtimeErrorHandler", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
+    assert(runtime_error_handler_id != NULL);
 }
 
-JNIEXPORT void JNICALL Java_Game_tool_1onUse(JNIEnv *localJavaEnv, jobject localJavaObject, jlong onFns) {
-    (void)localJavaEnv;
-    (void)localJavaObject;
+JNIEXPORT void JNICALL Java_Game_tool_1onUse(JNIEnv *java_env_, jobject java_object_, jlong onFns) {
+    (void)java_env_;
+    (void)java_object_;
 
     printf("Java_Game_tool_1onUse\n");
     printf("onFns: %p\n", (void *)onFns);
