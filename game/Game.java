@@ -41,61 +41,57 @@ class Game {
 
     public Game() {
         System.loadLibrary("global_library_loader");
-        this.loadGlobalLibraries();
+        loadGlobalLibraries();
 
         System.loadLibrary("adapter");
 
-        this.init();
+        init();
 
-        this.grugSetRuntimeErrorHandler();
+        grugSetRuntimeErrorHandler();
 
         while (true) {
-            if (this.grugRegenerateModifiedMods()) {
-                if (this.errorHasChanged()) {
-                    if (this.loadingErrorInGrugFile()) {
-                        System.err.println("grug loading error: " + this.errorMsg() + ", in " + this.errorPath()
-                                + " (detected in grug.c:" + this.errorGrugCLineNumber() + ")");
+            if (grugRegenerateModifiedMods()) {
+                if (errorHasChanged()) {
+                    if (loadingErrorInGrugFile()) {
+                        System.err.println("grug loading error: " + errorMsg() + ", in " + errorPath()
+                                + " (detected in grug.c:" + errorGrugCLineNumber() + ")");
                     } else {
-                        System.err.println("grug loading error: " + this.errorMsg() + " (detected in grug.c:"
-                                + this.errorGrugCLineNumber() + ")");
+                        System.err.println("grug loading error: " + errorMsg() + " (detected in grug.c:"
+                                + errorGrugCLineNumber() + ")");
                     }
                 }
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                sleep(1000);
 
                 continue;
             }
 
-            this.reloadModifiedEntities();
+            reloadModifiedEntities();
 
             // Since this is a simple terminal game, there are no PNGs/MP3s/etc.
             // reloadModifiedResources();
-
-            // long onFns = 0x42; // TODO: Unhardcode
-
-            // this.tool_onUse(onFns);
 
             update();
 
             System.out.println();
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            sleep(1000);
+        }
+    }
+
+    private void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
     private void reloadModifiedEntities() {
-        int reloadsSize = this.getGrugReloadsSize();
+        int reloadsSize = getGrugReloadsSize();
 
         for (int reloadIndex = 0; reloadIndex < reloadsSize; reloadIndex++) {
-            this.fillReloadData(reloadData, reloadIndex);
+            fillReloadData(reloadData, reloadIndex);
 
             GrugFile file = reloadData.file;
 
@@ -104,7 +100,7 @@ class Game {
                     data.humanDlls[i] = file.dll;
 
                     data.humanGlobals[i] = new byte[file.globalsSize];
-                    this.initGlobals(file.initGlobalsFn, data.humanGlobals[i], i);
+                    initGlobals(file.initGlobalsFn, data.humanGlobals[i], i);
                 }
             }
 
@@ -113,7 +109,7 @@ class Game {
                     data.toolDlls[i] = file.dll;
 
                     data.toolGlobals[i] = new byte[file.globalsSize];
-                    this.initGlobals(file.initGlobalsFn, data.toolGlobals[i], i);
+                    initGlobals(file.initGlobalsFn, data.toolGlobals[i], i);
 
                     data.tools[i].onFns = file.onFns;
                 }
