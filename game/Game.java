@@ -108,7 +108,16 @@ class Game {
                 }
             }
 
-            // TODO: Copy-paste the loop, to reload the tools
+            for (int i = 0; i < 2; i++) {
+                if (reloadData.oldDll == data.toolDlls[i]) {
+                    data.toolDlls[i] = file.dll;
+
+                    data.toolGlobals[i] = new byte[file.globalsSize];
+                    this.initGlobals(file.initGlobalsFn, data.toolGlobals[i], i);
+
+                    data.tools[i].onFns = file.onFns;
+                }
+            }
         }
     }
 
@@ -141,11 +150,11 @@ class GrugFile {
 }
 
 class Data {
-    public Human[] humans;
+    public Human[] humans = { new Human(), new Human() };
     public long[] humanDlls = new long[2];
     public byte[][] humanGlobals = new byte[2][];
 
-    public Tool[] tools;
+    public Tool[] tools = { new Tool(), new Tool() };
     public long[] toolDlls = new long[2];
     public byte[][] toolGlobals = new byte[2][];
 
@@ -169,11 +178,28 @@ class Data {
 }
 
 class Human {
+    public String name = "";
+    public int health = -1;
+    public int buyGoldValue = -1;
+    public int killGoldValue = -1;
+
+    // These are not initialized by mods
+    public int id = -1;
+    public int opponentId = -1;
+    public int maxHealth = -1;
+
     public Human() {
     }
 }
 
 class Tool {
+    public String name = "";
+    public int buyGoldValue = -1;
+
+    // These are not initialized by mods
+    public int humanParentId = 0;
+    public long onFns = 0;
+
     public Tool() {
     }
 }
