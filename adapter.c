@@ -119,6 +119,42 @@ JNIEXPORT jboolean JNICALL Java_Game_grugRegenerateModifiedMods(JNIEnv *java_env
     return grug_regenerate_modified_mods();
 }
 
+JNIEXPORT jint JNICALL Java_Game_getGrugReloadsSize(JNIEnv *java_env_, jobject java_object_) {
+    (void)java_env_;
+    (void)java_object_;
+
+    return grug_reloads_size;
+}
+
+JNIEXPORT void JNICALL Java_Game_fillReloadData(JNIEnv *env, jobject obj, jobject java_reload_data, jint reload_index) {
+    (void)obj;
+
+    struct grug_modified c_reload_data = grug_reloads[reload_index];
+
+    char *c_path = c_reload_data.path;
+    void *c_old_dll = c_reload_data.old_dll;
+
+    jclass reload_data_class = (*env)->GetObjectClass(env, java_reload_data);
+
+    jfieldID path_fid = (*env)->GetFieldID(env, reload_data_class, "path", "Ljava/lang/String;");
+    // TODO: Does this cause a memory leak?
+    jstring java_path = (*env)->NewStringUTF(env, c_path);
+    (*env)->SetObjectField(env, java_reload_data, path_fid, java_path);
+
+    jfieldID old_dll_fid = (*env)->GetFieldID(env, reload_data_class, "oldDll", "J");
+    (*env)->SetLongField(env, java_reload_data, old_dll_fid, (jlong)c_old_dll);
+}
+
+JNIEXPORT void JNICALL Java_Game_initGlobals(JNIEnv *java_env_, jobject java_object_, jobject file, jbyteArray globals, jint entity_id) {
+    (void)java_env_;
+    (void)java_object_;
+
+    // TODO:
+    (void)file;
+    (void)globals;
+    (void)entity_id;
+}
+
 JNIEXPORT void JNICALL Java_Game_init(JNIEnv *java_env_, jobject java_object_) {
     java_env = java_env_;
     java_object = java_object_;

@@ -40,6 +40,8 @@
             "args": [
                 "-h",
                 ".",
+                "-d",
+                "generated_classes",
                 "Game.java",
             ],
             "hide": true
