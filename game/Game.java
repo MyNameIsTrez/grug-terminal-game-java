@@ -1,3 +1,5 @@
+package game;
+
 class Game {
     private native void loadGlobalLibraries();
 

@@ -1,4 +1,4 @@
-#include "Game.h"
+#include "headers/game_Game.h"
 
 #include "grug/grug.h"
 
@@ -64,28 +64,28 @@ void runtime_error_handler(char *reason, enum grug_runtime_error_type type, char
     (*java_env)->CallVoidMethod(java_env, java_object, runtime_error_handler_id, java_reason, java_type, java_on_fn_name, java_on_fn_path);
 }
 
-JNIEXPORT void JNICALL Java_Game_grugSetRuntimeErrorHandler(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT void JNICALL Java_game_Game_grugSetRuntimeErrorHandler(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
     grug_set_runtime_error_handler(runtime_error_handler);
 }
 
-JNIEXPORT jboolean JNICALL Java_Game_errorHasChanged(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT jboolean JNICALL Java_game_Game_errorHasChanged(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
     return grug_error.has_changed;
 }
 
-JNIEXPORT jboolean JNICALL Java_Game_loadingErrorInGrugFile(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT jboolean JNICALL Java_game_Game_loadingErrorInGrugFile(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
     return grug_loading_error_in_grug_file;
 }
 
-JNIEXPORT jstring JNICALL Java_Game_errorMsg(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT jstring JNICALL Java_game_Game_errorMsg(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
@@ -95,7 +95,7 @@ JNIEXPORT jstring JNICALL Java_Game_errorMsg(JNIEnv *java_env_, jobject java_obj
     return (*java_env)->NewStringUTF(java_env, grug_error.msg);
 }
 
-JNIEXPORT jstring JNICALL Java_Game_errorPath(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT jstring JNICALL Java_game_Game_errorPath(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
@@ -105,28 +105,28 @@ JNIEXPORT jstring JNICALL Java_Game_errorPath(JNIEnv *java_env_, jobject java_ob
     return (*java_env)->NewStringUTF(java_env, grug_error.path);
 }
 
-JNIEXPORT jint JNICALL Java_Game_errorGrugCLineNumber(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT jint JNICALL Java_game_Game_errorGrugCLineNumber(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
     return grug_error.grug_c_line_number;
 }
 
-JNIEXPORT jboolean JNICALL Java_Game_grugRegenerateModifiedMods(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT jboolean JNICALL Java_game_Game_grugRegenerateModifiedMods(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
     return grug_regenerate_modified_mods();
 }
 
-JNIEXPORT jint JNICALL Java_Game_getGrugReloadsSize(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT jint JNICALL Java_game_Game_getGrugReloadsSize(JNIEnv *java_env_, jobject java_object_) {
     (void)java_env_;
     (void)java_object_;
 
     return grug_reloads_size;
 }
 
-JNIEXPORT void JNICALL Java_Game_fillReloadData(JNIEnv *env, jobject obj, jobject java_reload_data, jint reload_index) {
+JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, jobject java_reload_data, jint reload_index) {
     (void)obj;
 
     struct grug_modified c_reload_data = grug_reloads[reload_index];
@@ -143,9 +143,12 @@ JNIEXPORT void JNICALL Java_Game_fillReloadData(JNIEnv *env, jobject obj, jobjec
 
     jfieldID old_dll_fid = (*env)->GetFieldID(env, reload_data_class, "oldDll", "J");
     (*env)->SetLongField(env, java_reload_data, old_dll_fid, (jlong)c_old_dll);
+
+    jfieldID file_fid = (*env)->GetFieldID(env, reload_data_class, "file", "Lgame/ReloadData;");
+    assert(file_fid);
 }
 
-JNIEXPORT void JNICALL Java_Game_initGlobals(JNIEnv *java_env_, jobject java_object_, jobject file, jbyteArray globals, jint entity_id) {
+JNIEXPORT void JNICALL Java_game_Game_initGlobals(JNIEnv *java_env_, jobject java_object_, jobject file, jbyteArray globals, jint entity_id) {
     (void)java_env_;
     (void)java_object_;
 
@@ -155,7 +158,7 @@ JNIEXPORT void JNICALL Java_Game_initGlobals(JNIEnv *java_env_, jobject java_obj
     (void)entity_id;
 }
 
-JNIEXPORT void JNICALL Java_Game_init(JNIEnv *java_env_, jobject java_object_) {
+JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *java_env_, jobject java_object_) {
     java_env = java_env_;
     java_object = java_object_;
 
@@ -166,11 +169,11 @@ JNIEXPORT void JNICALL Java_Game_init(JNIEnv *java_env_, jobject java_object_) {
     assert(runtime_error_handler_id != NULL);
 }
 
-JNIEXPORT void JNICALL Java_Game_tool_1onUse(JNIEnv *java_env_, jobject java_object_, jlong onFns) {
+JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *java_env_, jobject java_object_, jlong onFns) {
     (void)java_env_;
     (void)java_object_;
 
-    printf("Java_Game_tool_1onUse\n");
+    printf("Java_game_Game_tool_1onUse\n");
     printf("onFns: %p\n", (void *)onFns);
 
     // TODO: Cast the onFns parameter to the tool's on_fns struct, and call on_use() from it

@@ -8,7 +8,7 @@
             "type": "java",
             "name": "Run",
             "request": "launch",
-            "mainClass": "Game",
+            "mainClass": "game.Game",
             "vmArgs": "-Djava.library.path=.:grug",
             "projectName": "grug-terminal-game-java_7946e7cb"
         }

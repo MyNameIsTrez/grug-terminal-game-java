@@ -1,5 +1,5 @@
-generated_classes
+classes
+headers
 mod_dlls
-Game.h
 libadapter.so
 libglobal_library_loader.so

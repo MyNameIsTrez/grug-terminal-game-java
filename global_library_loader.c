@@ -1,9 +1,9 @@
-#include "Game.h"
+#include "headers/game_Game.h"
 
 #include <dlfcn.h>
 #include <stdlib.h>
 
-JNIEXPORT void JNICALL Java_Game_loadGlobalLibraries(JNIEnv *javaEnv, jobject javaObject) {
+JNIEXPORT void JNICALL Java_game_Game_loadGlobalLibraries(JNIEnv *javaEnv, jobject javaObject) {
     (void)javaEnv;
     (void)javaObject;
 
