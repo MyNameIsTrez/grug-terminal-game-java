@@ -126,26 +126,44 @@ JNIEXPORT jint JNICALL Java_game_Game_getGrugReloadsSize(JNIEnv *java_env_, jobj
     return grug_reloads_size;
 }
 
-JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, jobject java_reload_data, jint reload_index) {
+JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, jobject reload_data_object, jint reload_index) {
     (void)obj;
 
     struct grug_modified c_reload_data = grug_reloads[reload_index];
 
-    char *c_path = c_reload_data.path;
-    void *c_old_dll = c_reload_data.old_dll;
-
-    jclass reload_data_class = (*env)->GetObjectClass(env, java_reload_data);
+    jclass reload_data_class = (*env)->GetObjectClass(env, reload_data_object);
+    assert(reload_data_class);
 
     jfieldID path_fid = (*env)->GetFieldID(env, reload_data_class, "path", "Ljava/lang/String;");
+    assert(path_fid);
     // TODO: Does this cause a memory leak?
+    char *c_path = c_reload_data.path;
     jstring java_path = (*env)->NewStringUTF(env, c_path);
-    (*env)->SetObjectField(env, java_reload_data, path_fid, java_path);
+    assert(java_path);
+    (*env)->SetObjectField(env, reload_data_object, path_fid, java_path);
 
     jfieldID old_dll_fid = (*env)->GetFieldID(env, reload_data_class, "oldDll", "J");
-    (*env)->SetLongField(env, java_reload_data, old_dll_fid, (jlong)c_old_dll);
+    assert(old_dll_fid);
+    void *c_old_dll = c_reload_data.old_dll;
+    (*env)->SetLongField(env, reload_data_object, old_dll_fid, (jlong)c_old_dll);
 
-    jfieldID file_fid = (*env)->GetFieldID(env, reload_data_class, "file", "Lgame/ReloadData;");
+    jfieldID file_fid = (*env)->GetFieldID(env, reload_data_class, "file", "Lgame/GrugFile;");
     assert(file_fid);
+    jobject file_object = (*env)->GetObjectField(env, reload_data_object, file_fid);
+    assert(file_object);
+
+    jclass file_class = (*env)->GetObjectClass(env, file_object);
+    assert(file_class);
+
+    struct grug_file *c_file = c_reload_data.file;
+
+    jfieldID name_fid = (*env)->GetFieldID(env, file_class, "name", "Ljava/lang/String;");
+    assert(name_fid);
+    // TODO: Does this cause a memory leak?
+    char *c_name = c_file->name;
+    jstring java_name = (*env)->NewStringUTF(env, c_name);
+    assert(java_name);
+    (*env)->SetObjectField(env, file_object, name_fid, java_name);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_initGlobals(JNIEnv *java_env_, jobject java_object_, jobject file, jbyteArray globals, jint entity_id) {
