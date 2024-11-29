@@ -21,7 +21,7 @@ class Game {
 
     private native void fillReloadData(ReloadData reloadData, int i);
 
-    private native void initGlobals(GrugFile file, byte[] globals, int id);
+    private native void initGlobals(long initGlobalsFn, byte[] globals, int id);
 
     private native void init();
 
@@ -104,7 +104,7 @@ class Game {
                     data.humanDlls[i] = file.dll;
 
                     data.humanGlobals[i] = new byte[file.globalsSize];
-                    this.initGlobals(file, data.humanGlobals[i], i);
+                    this.initGlobals(file.initGlobalsFn, data.humanGlobals[i], i);
                 }
             }
 

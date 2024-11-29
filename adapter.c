@@ -177,14 +177,14 @@ JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, j
     (*env)->SetLongField(env, file_object, resource_mtimes_fid, (jlong)c_file->resource_mtimes);
 }
 
-JNIEXPORT void JNICALL Java_game_Game_initGlobals(JNIEnv *java_env_, jobject java_object_, jobject file, jbyteArray globals, jint entity_id) {
-    (void)java_env_;
-    (void)java_object_;
+JNIEXPORT void JNICALL Java_game_Game_initGlobals(JNIEnv *env, jobject obj, jlong init_globals_fn, jbyteArray globals, jint entity_id) {
+    (void)obj;
 
-    // TODO:
-    (void)file;
-    (void)globals;
-    (void)entity_id;
+    jbyte *globals_bytes = (*env)->GetByteArrayElements(env, globals, NULL);
+
+    ((grug_init_globals_fn_t)init_globals_fn)(globals_bytes, entity_id);
+
+    (*env)->ReleaseByteArrayElements(env, globals, globals_bytes, 0);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *java_env_, jobject java_object_) {
@@ -198,12 +198,12 @@ JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *java_env_, jobject java_objec
     assert(runtime_error_handler_id != NULL);
 }
 
-JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *java_env_, jobject java_object_, jlong onFns) {
+JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *java_env_, jobject java_object_, jlong on_fns) {
     (void)java_env_;
     (void)java_object_;
 
     printf("Java_game_Game_tool_1onUse\n");
-    printf("onFns: %p\n", (void *)onFns);
+    printf("on_fns: %p\n", (void *)on_fns);
 
-    // TODO: Cast the onFns parameter to the tool's on_fns struct, and call on_use() from it
+    // TODO: Cast the on_fns parameter to the tool's on_fns struct, and call on_use() from it
 }
