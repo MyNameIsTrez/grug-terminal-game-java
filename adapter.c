@@ -213,22 +213,71 @@ JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, 
 
     jfieldID files_size_fid = (*env)->GetFieldID(env, dir_class, "filesSize", "I");
     (*env)->SetIntField(env, dir_object, files_size_fid, (jint)grug_mods.files_size);
+
+    jfieldID address_fid = (*env)->GetFieldID(env, dir_class, "address", "J");
+    (*env)->SetLongField(env, dir_object, address_fid, (jlong)&grug_mods);
 }
 
-JNIEXPORT void JNICALL Java_game_Game_fillGrugDir(JNIEnv *env, jobject obj, jobject dir, jobject parent_dir, jint dir_index) {
-    (void)env; // TODO: REMOVE!
-    (void)obj; // TODO: REMOVE!
-    (void)dir; // TODO: REMOVE!
-    (void)parent_dir; // TODO: REMOVE!
-    (void)dir_index; // TODO: REMOVE!
+JNIEXPORT void JNICALL Java_game_Game_fillGrugDir(JNIEnv *env, jobject obj, jobject dir_object, jlong parent_dir_address, jint dir_index) {
+    (void)obj;
+
+    jclass dir_class = (*env)->GetObjectClass(env, dir_object);
+
+    struct grug_mod_dir *parent_dir = (struct grug_mod_dir *)parent_dir_address;
+
+    struct grug_mod_dir dir = parent_dir->dirs[dir_index];
+
+    jfieldID name_fid = (*env)->GetFieldID(env, dir_class, "name", "Ljava/lang/String;");
+    // TODO: Does this cause a memory leak?
+    jstring name = (*env)->NewStringUTF(env, dir.name);
+    (*env)->SetObjectField(env, dir_object, name_fid, name);
+
+    jfieldID dirs_size_fid = (*env)->GetFieldID(env, dir_class, "dirsSize", "I");
+    (*env)->SetIntField(env, dir_object, dirs_size_fid, (jint)dir.dirs_size);
+
+    jfieldID files_size_fid = (*env)->GetFieldID(env, dir_class, "filesSize", "I");
+    (*env)->SetIntField(env, dir_object, files_size_fid, (jint)dir.files_size);
+
+    jfieldID address_fid = (*env)->GetFieldID(env, dir_class, "address", "J");
+    (*env)->SetLongField(env, dir_object, address_fid, (jlong)&parent_dir->dirs[dir_index]);
 }
 
-JNIEXPORT void JNICALL Java_game_Game_fillGrugFile(JNIEnv *env, jobject obj, jobject file, jobject parent_dir, jint file_index) {
-    (void)env; // TODO: REMOVE!
-    (void)obj; // TODO: REMOVE!
-    (void)file; // TODO: REMOVE!
-    (void)parent_dir; // TODO: REMOVE!
-    (void)file_index; // TODO: REMOVE!
+JNIEXPORT void JNICALL Java_game_Game_fillGrugFile(JNIEnv *env, jobject obj, jobject file_object, jlong parent_dir_address, jint file_index) {
+    (void)obj;
+
+    jclass file_class = (*env)->GetObjectClass(env, file_object);
+
+    struct grug_mod_dir *parent_dir = (struct grug_mod_dir *)parent_dir_address;
+
+    struct grug_file file = parent_dir->files[file_index];
+
+    jfieldID name_fid = (*env)->GetFieldID(env, file_class, "name", "Ljava/lang/String;");
+    // TODO: Does this cause a memory leak?
+    jstring name = (*env)->NewStringUTF(env, file.name);
+    (*env)->SetObjectField(env, file_object, name_fid, name);
+
+    jfieldID dll_fid = (*env)->GetFieldID(env, file_class, "dll", "J");
+    (*env)->SetLongField(env, file_object, dll_fid, (jlong)file.dll);
+
+    jfieldID define_fn_fid = (*env)->GetFieldID(env, file_class, "defineFn", "J");
+    (*env)->SetLongField(env, file_object, define_fn_fid, (jlong)file.define_fn);
+
+    jfieldID globals_size_fid = (*env)->GetFieldID(env, file_class, "globalsSize", "I");
+    (*env)->SetIntField(env, file_object, globals_size_fid, (jint)file.globals_size);
+
+    jfieldID init_globals_fn_fid = (*env)->GetFieldID(env, file_class, "initGlobalsFn", "J");
+    (*env)->SetLongField(env, file_object, init_globals_fn_fid, (jlong)file.init_globals_fn);
+
+    jfieldID define_type_fid = (*env)->GetFieldID(env, file_class, "defineType", "Ljava/lang/String;");
+    // TODO: Does this cause a memory leak?
+    jstring define_type = (*env)->NewStringUTF(env, file.define_type);
+    (*env)->SetObjectField(env, file_object, define_type_fid, define_type);
+
+    jfieldID on_fns_fid = (*env)->GetFieldID(env, file_class, "onFns", "J");
+    (*env)->SetLongField(env, file_object, on_fns_fid, (jlong)file.on_fns);
+
+    jfieldID resource_mtimes_fid = (*env)->GetFieldID(env, file_class, "resourceMtimes", "J");
+    (*env)->SetLongField(env, file_object, resource_mtimes_fid, (jlong)file.resource_mtimes);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlong on_fns) {

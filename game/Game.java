@@ -29,9 +29,9 @@ class Game {
 
     private native void fillRootGrugDir(GrugDir root);
 
-    private native void fillGrugDir(GrugDir dir, GrugDir parentDir, int dirIndex);
+    private native void fillGrugDir(GrugDir dir, long parentDirAddress, int dirIndex);
 
-    private native void fillGrugFile(GrugFile file, GrugDir parentDir, int fileIndex);
+    private native void fillGrugFile(GrugFile file, long parentDirAddress, int fileIndex);
 
     private native void tool_onUse(long onFns);
 
@@ -166,14 +166,14 @@ class Game {
     private void getTypeFilesImpl(GrugDir dir, String defineType) {
         for (int i = 0; i < dir.dirsSize; i++) {
             GrugDir subdir = new GrugDir();
-            fillGrugDir(subdir, dir, i);
+            fillGrugDir(subdir, dir.address, i);
 
             getTypeFilesImpl(subdir, defineType);
         }
 
         for (int i = 0; i < dir.filesSize; i++) {
             GrugFile file = new GrugFile();
-            fillGrugFile(file, dir, i);
+            fillGrugFile(file, dir.address, i);
 
             if (file.defineType.equals(defineType)) {
                 data.typeFiles.add(file);
@@ -199,6 +199,8 @@ class GrugDir {
 
     public ArrayList<GrugFile> files = new ArrayList<GrugFile>();
     public int filesSize;
+
+    public long address;
 
     public GrugDir() {
     }
