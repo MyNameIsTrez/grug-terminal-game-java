@@ -118,6 +118,27 @@ class Game {
     }
 
     private void update() {
+        switch (data.state) {
+            case PICKING_PLAYER -> pick_player();
+            case PICKING_TOOLS -> pick_tools();
+            case PICKING_OPPONENT -> pick_opponent();
+            case FIGHTING -> fight();
+        }
+    }
+
+    private void pick_player() {
+        System.out.println("You have " + data.gold + " gold");
+    }
+
+    private void pick_tools() {
+
+    }
+
+    private void pick_opponent() {
+
+    }
+
+    private void fight() {
 
     }
 }
