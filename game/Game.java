@@ -1,5 +1,7 @@
 package game;
 
+import java.util.ArrayList;
+
 class Game {
     private native void loadGlobalLibraries();
 
@@ -24,6 +26,12 @@ class Game {
     private native void initGlobals(long initGlobalsFn, byte[] globals, int id);
 
     private native void init();
+
+    private native void fillRootGrugDir(GrugDir root);
+
+    private native void fillGrugDir(GrugDir dir, GrugDir parentDir, int dirIndex);
+
+    private native void fillGrugFile(GrugFile file, GrugDir parentDir, int fileIndex);
 
     private native void tool_onUse(long onFns);
 
@@ -128,6 +136,8 @@ class Game {
 
     private void pick_player() {
         System.out.println("You have " + data.gold + " gold");
+
+        ArrayList<GrugFile> files_defining_human = getTypeFiles("human");
     }
 
     private void pick_tools() {
@@ -141,6 +151,35 @@ class Game {
     private void fight() {
 
     }
+
+    private ArrayList<GrugFile> getTypeFiles(String defineType) {
+        data.typeFiles.clear();
+
+        GrugDir root = new GrugDir();
+        fillRootGrugDir(root);
+
+        getTypeFilesImpl(root, defineType);
+
+        return data.typeFiles;
+    }
+
+    private void getTypeFilesImpl(GrugDir dir, String defineType) {
+        for (int i = 0; i < dir.dirsSize; i++) {
+            GrugDir subdir = new GrugDir();
+            fillGrugDir(subdir, dir, i);
+
+            getTypeFilesImpl(subdir, defineType);
+        }
+
+        for (int i = 0; i < dir.filesSize; i++) {
+            GrugFile file = new GrugFile();
+            fillGrugFile(file, dir, i);
+
+            if (file.defineType.equals(defineType)) {
+                data.typeFiles.add(file);
+            }
+        }
+    }
 }
 
 class ReloadData {
@@ -149,6 +188,21 @@ class ReloadData {
     public GrugFile file = new GrugFile();
 
     public ReloadData() {
+    }
+}
+
+class GrugDir {
+    public String name;
+
+    public ArrayList<GrugDir> dirs = new ArrayList<GrugDir>();
+    public int dirsSize;
+    public int dirsCapacity;
+
+    public ArrayList<GrugFile> files = new ArrayList<GrugFile>();
+    public int filesSize;
+    public int filesCapacity;
+
+    public GrugDir() {
     }
 }
 
@@ -184,7 +238,7 @@ class Data {
         FIGHTING,
     }
 
-    public GrugFile[] typeFiles;
+    public ArrayList<GrugFile> typeFiles = new ArrayList<GrugFile>();
     public int gold = 400;
 
     public boolean playerHasHuman = false;

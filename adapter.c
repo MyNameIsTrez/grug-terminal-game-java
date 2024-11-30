@@ -198,6 +198,15 @@ JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *env, jobject obj) {
     assert(runtime_error_handler_id != NULL);
 }
 
+JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, jobject root) {
+}
+
+JNIEXPORT void JNICALL Java_game_Game_fillGrugDir(JNIEnv *env, jobject obj, jobject dir, jobject parent_dir, jint dir_index) {
+}
+
+JNIEXPORT void JNICALL Java_game_Game_fillGrugFile(JNIEnv *env, jobject obj, jobject file, jobject parent_dir, jint file_index) {
+}
+
 JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlong on_fns) {
     (void)env;
     (void)obj;
