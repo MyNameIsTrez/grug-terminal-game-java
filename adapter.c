@@ -160,7 +160,7 @@ JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, j
     (*env)->SetLongField(env, file_object, define_fn_fid, (jlong)c_file.define_fn);
 
     jfieldID globals_size_fid = (*env)->GetFieldID(env, file_class, "globalsSize", "I");
-    (*env)->SetIntField(env, file_object, globals_size_fid, (jlong)c_file.globals_size);
+    (*env)->SetIntField(env, file_object, globals_size_fid, (jint)c_file.globals_size);
 
     jfieldID init_globals_fn_fid = (*env)->GetFieldID(env, file_class, "initGlobalsFn", "J");
     (*env)->SetLongField(env, file_object, init_globals_fn_fid, (jlong)c_file.init_globals_fn);
@@ -198,13 +198,37 @@ JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *env, jobject obj) {
     assert(runtime_error_handler_id != NULL);
 }
 
-JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, jobject root) {
+JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, jobject dir_object) {
+    (void)obj;
+
+    jclass dir_class = (*env)->GetObjectClass(env, dir_object);
+
+    jfieldID name_fid = (*env)->GetFieldID(env, dir_class, "name", "Ljava/lang/String;");
+    // TODO: Does this cause a memory leak?
+    jstring name = (*env)->NewStringUTF(env, grug_mods.name);
+    (*env)->SetObjectField(env, dir_object, name_fid, name);
+
+    jfieldID dirs_size_fid = (*env)->GetFieldID(env, dir_class, "dirsSize", "I");
+    (*env)->SetIntField(env, dir_object, dirs_size_fid, (jint)grug_mods.dirs_size);
+
+    jfieldID files_size_fid = (*env)->GetFieldID(env, dir_class, "filesSize", "I");
+    (*env)->SetIntField(env, dir_object, files_size_fid, (jint)grug_mods.files_size);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_fillGrugDir(JNIEnv *env, jobject obj, jobject dir, jobject parent_dir, jint dir_index) {
+    (void)env; // TODO: REMOVE!
+    (void)obj; // TODO: REMOVE!
+    (void)dir; // TODO: REMOVE!
+    (void)parent_dir; // TODO: REMOVE!
+    (void)dir_index; // TODO: REMOVE!
 }
 
 JNIEXPORT void JNICALL Java_game_Game_fillGrugFile(JNIEnv *env, jobject obj, jobject file, jobject parent_dir, jint file_index) {
+    (void)env; // TODO: REMOVE!
+    (void)obj; // TODO: REMOVE!
+    (void)file; // TODO: REMOVE!
+    (void)parent_dir; // TODO: REMOVE!
+    (void)file_index; // TODO: REMOVE!
 }
 
 JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlong on_fns) {

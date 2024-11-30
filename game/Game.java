@@ -196,11 +196,9 @@ class GrugDir {
 
     public ArrayList<GrugDir> dirs = new ArrayList<GrugDir>();
     public int dirsSize;
-    public int dirsCapacity;
 
     public ArrayList<GrugFile> files = new ArrayList<GrugFile>();
     public int filesSize;
-    public int filesCapacity;
 
     public GrugDir() {
     }
