@@ -21,6 +21,10 @@ jfieldID human_definition_health_fid;
 jfieldID human_definition_buy_gold_value_fid;
 jfieldID human_definition_kill_gold_value_fid;
 
+jobject tool_definition_obj;
+jfieldID tool_definition_name_fid;
+jfieldID tool_definition_buy_gold_value_fid;
+
 void game_fn_define_human(string c_name, i32 c_health, i32 c_buy_gold_value, i32 c_kill_gold_value) {
     // TODO: Does this cause a memory leak?
     jstring name = (*global_env)->NewStringUTF(global_env, c_name);
@@ -35,11 +39,12 @@ void game_fn_define_human(string c_name, i32 c_health, i32 c_buy_gold_value, i32
 }
 
 void game_fn_define_tool(string c_name, i32 c_buy_gold_value) {
-    // TODO: REMOVE!
-    (void)c_name;
-    (void)c_buy_gold_value;
+    // TODO: Does this cause a memory leak?
+    jstring name = (*global_env)->NewStringUTF(global_env, c_name);
+    assert(name);
+    (*global_env)->SetObjectField(global_env, tool_definition_obj, tool_definition_name_fid, name);
 
-    assert(false);
+    (*global_env)->SetIntField(global_env, tool_definition_obj, tool_definition_buy_gold_value_fid, c_buy_gold_value);
 }
 
 id game_fn_get_human_parent(id tool_id) {
@@ -232,6 +237,23 @@ JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *env, jobject obj) {
 
     human_definition_kill_gold_value_fid = (*env)->GetFieldID(env, human_definition_class, "killGoldValue", "I");
     assert(human_definition_kill_gold_value_fid);
+
+    jfieldID tool_definition_fid = (*env)->GetStaticFieldID(env, entity_definitions_class, "tool", "Lgame/Tool;");
+    assert(tool_definition_fid);
+
+    tool_definition_obj = (*env)->GetStaticObjectField(env, entity_definitions_class, tool_definition_fid);
+    assert(tool_definition_obj);
+
+    tool_definition_obj = (*env)->NewGlobalRef(env, tool_definition_obj);
+
+    jclass tool_definition_class = (*env)->GetObjectClass(env, tool_definition_obj);
+    assert(tool_definition_class);
+
+    tool_definition_name_fid = (*env)->GetFieldID(env, tool_definition_class, "name", "Ljava/lang/String;");
+    assert(tool_definition_name_fid);
+
+    tool_definition_buy_gold_value_fid = (*env)->GetFieldID(env, tool_definition_class, "buyGoldValue", "I");
+    assert(tool_definition_buy_gold_value_fid);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, jobject dir_object) {

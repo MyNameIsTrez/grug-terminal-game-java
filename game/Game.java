@@ -143,14 +143,14 @@ class Game {
     }
 
     private void pickPlayer() {
-        System.out.println("You have " + data.gold + " gold");
+        System.out.println("You have " + data.gold + " gold\n");
 
         ArrayList<GrugFile> filesDefiningHuman = getTypeFiles("human");
 
         printPlayableHumans(filesDefiningHuman);
 
         System.out.println("Type the number next to the human you want to play as"
-                + (data.playerHasHuman ? " (type 0 to skip)" : "") + ":\n");
+                + (data.playerHasHuman ? " (type 0 to skip)" : "") + ":");
 
         int playerNumber = readSize();
         if (playerNumber == -1) {
@@ -212,6 +212,8 @@ class Game {
 
             System.out.println((i + 1) + ". " + human.name + ", costing " + human.buyGoldValue + " gold");
         }
+
+        System.out.println();
     }
 
     private int readSize() {
@@ -228,7 +230,74 @@ class Game {
     }
 
     private void pickTools() {
+        System.out.println("You have " + data.gold + " gold\n");
 
+        ArrayList<GrugFile> filesDefiningTool = getTypeFiles("tool");
+
+        printTools(filesDefiningTool);
+
+        System.out.println("Type the number next to the tool you want to buy"
+                + (data.playerHasTool ? " (type 0 to skip)" : "") + ":");
+
+        int toolNumber = readSize();
+        if (toolNumber == -1) {
+            return;
+        }
+
+        if (toolNumber == 0) {
+            if (data.playerHasTool) {
+                data.state = State.PICKING_OPPONENT;
+                return;
+            }
+
+            System.err.println("The minimum number you can enter is 1");
+            return;
+        }
+
+        if (toolNumber > data.typeFiles.size()) {
+            System.err.println("The maximum number you can enter is " + data.typeFiles.size());
+            return;
+        }
+
+        int toolIndex = toolNumber - 1;
+
+        GrugFile file = filesDefiningTool.get(toolIndex);
+
+        callDefineFn(file.defineFn);
+        Tool tool = new Tool(EntityDefinitions.tool);
+
+        tool.onFns = file.onFns;
+
+        if (tool.buyGoldValue > data.gold) {
+            System.err.println("You don't have enough gold to buy that tool");
+            return;
+        }
+
+        data.gold -= tool.buyGoldValue;
+
+        tool.humanParentId = PLAYER_INDEX;
+
+        data.tools[PLAYER_INDEX] = tool;
+        data.toolDlls[PLAYER_INDEX] = file.dll;
+
+        data.toolGlobals[PLAYER_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.toolGlobals[PLAYER_INDEX], PLAYER_INDEX);
+
+        data.playerHasTool = true;
+    }
+
+    private void printTools(ArrayList<GrugFile> filesDefiningTool) {
+        for (int i = 0; i < filesDefiningTool.size(); i++) {
+            GrugFile file = filesDefiningTool.get(i);
+
+            callDefineFn(file.defineFn);
+
+            Tool tool = EntityDefinitions.tool;
+
+            System.out.println((i + 1) + ". " + tool.name + ", costing " + tool.buyGoldValue + " gold");
+        }
+
+        System.out.println();
     }
 
     private void pickOpponent() {
@@ -370,6 +439,14 @@ class Tool {
     public long onFns = 0;
 
     public Tool() {
+    }
+
+    public Tool(Tool other) {
+        this.name = other.name;
+        this.buyGoldValue = other.buyGoldValue;
+
+        this.humanParentId = other.humanParentId;
+        this.onFns = other.onFns;
     }
 }
 
