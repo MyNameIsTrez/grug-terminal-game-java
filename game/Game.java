@@ -48,7 +48,9 @@ class Game {
 
     Random rand = new Random();
 
-    private native void tool_onUse(long onFns);
+    private native boolean tool_hasOnUse(long onFns);
+
+    private native void tool_onUse(long onFns, byte[] globals);
 
     public void runtimeErrorHandler(String reason, int type, String on_fn_name, String on_fn_path) {
         System.err.println("grug runtime error in " + on_fn_name + "(): " + reason + ", in " + on_fn_path);
@@ -80,7 +82,7 @@ class Game {
                     }
                 }
 
-                sleep(1000);
+                sleep(1);
 
                 continue;
             }
@@ -94,13 +96,13 @@ class Game {
 
             System.out.println();
 
-            sleep(1000);
+            sleep(1);
         }
     }
 
-    private void sleep(long millis) {
+    private void sleep(long seconds) {
         try {
-            Thread.sleep(millis);
+            Thread.sleep(seconds * 1000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -383,7 +385,51 @@ class Game {
     }
 
     private void fight() {
+        Human player = data.humans[PLAYER_INDEX];
+        Human opponent = data.humans[OPPONENT_INDEX];
 
+        byte[] playerToolGlobals = data.toolGlobals[PLAYER_INDEX];
+        byte[] opponentToolGlobals = data.toolGlobals[OPPONENT_INDEX];
+
+        Tool playerTool = data.tools[PLAYER_INDEX];
+        Tool opponentTool = data.tools[OPPONENT_INDEX];
+
+        System.out.println("You have " + player.health + " health");
+        System.out.println("The opponent has " + opponent.health + " health");
+
+        if (tool_hasOnUse(playerTool.onFns)) {
+            System.out.println("You use your " + playerTool.name);
+            tool_onUse(playerTool.onFns, playerToolGlobals);
+            sleep(1);
+        } else {
+            System.out.println("You don't know what to do with your " + playerTool.name);
+            sleep(1);
+        }
+
+        if (opponent.health <= 0) {
+            System.out.println("The opponent died!");
+            sleep(1);
+            data.state = State.PICKING_PLAYER;
+            data.gold += opponent.killGoldValue;
+            player.health = player.maxHealth;
+            return;
+        }
+
+        if (tool_hasOnUse(opponentTool.onFns)) {
+            System.out.println("The opponent uses their " + opponentTool.name);
+            tool_onUse(opponentTool.onFns, opponentToolGlobals);
+            sleep(1);
+        } else {
+            System.out.println("The opponent doesn't know what to do with their " + opponentTool.name);
+            sleep(1);
+        }
+
+        if (player.health <= 0) {
+            System.out.println("You died!");
+            sleep(1);
+            data.state = State.PICKING_PLAYER;
+            player.health = player.maxHealth;
+        }
     }
 
     private ArrayList<GrugFile> getTypeFiles(String defineType) {

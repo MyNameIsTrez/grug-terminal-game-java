@@ -10,6 +10,10 @@ typedef char* string;
 typedef int32_t i32;
 typedef uint64_t id;
 
+struct tool_on_fns {
+	void (*use)(void *globals);
+};
+
 JNIEnv *global_env;
 jobject global_obj;
 
@@ -345,12 +349,19 @@ JNIEXPORT void JNICALL Java_game_Game_callDefineFn(JNIEnv *env, jobject obj, jlo
     ((grug_define_fn_t)define_fn)();
 }
 
-JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlong on_fns) {
+JNIEXPORT jboolean JNICALL Java_game_Game_tool_1hasOnUse(JNIEnv *env, jobject obj, jlong on_fns) {
     (void)env;
     (void)obj;
 
-    printf("Java_game_Game_tool_1onUse\n");
-    printf("on_fns: %p\n", (void *)on_fns);
+    return ((struct tool_on_fns *)on_fns)->use != NULL;
+}
 
-    // TODO: Cast the on_fns parameter to the tool's on_fns struct, and call on_use() from it
+JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlong on_fns, jbyteArray globals) {
+    (void)obj;
+
+    jbyte *globals_bytes = (*env)->GetByteArrayElements(env, globals, NULL);
+
+    ((struct tool_on_fns *)on_fns)->use(globals_bytes);
+
+    (*env)->ReleaseByteArrayElements(env, globals, globals_bytes, 0);
 }
