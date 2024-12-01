@@ -187,7 +187,7 @@ JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, j
     (*env)->SetLongField(env, file_object, resource_mtimes_fid, (jlong)c_file.resource_mtimes);
 }
 
-JNIEXPORT void JNICALL Java_game_Game_initGlobals(JNIEnv *env, jobject obj, jlong init_globals_fn, jbyteArray globals, jint entity_id) {
+JNIEXPORT void JNICALL Java_game_Game_callInitGlobals(JNIEnv *env, jobject obj, jlong init_globals_fn, jbyteArray globals, jint entity_id) {
     (void)obj;
 
     jbyte *globals_bytes = (*env)->GetByteArrayElements(env, globals, NULL);

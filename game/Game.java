@@ -1,6 +1,7 @@
 package game;
 
 import java.util.ArrayList;
+import java.util.Scanner;
 
 class Game {
     private native void loadGlobalLibraries();
@@ -23,7 +24,7 @@ class Game {
 
     private native void fillReloadData(ReloadData reloadData, int i);
 
-    private native void initGlobals(long initGlobalsFn, byte[] globals, int id);
+    private native void callInitGlobals(long initGlobalsFn, byte[] globals, int id);
 
     private native void init();
 
@@ -40,6 +41,11 @@ class Game {
     private ReloadData reloadData = new ReloadData();
 
     private Data data = new Data();
+
+    private Scanner scanner = new Scanner(System.in);
+
+    private static final int PLAYER_INDEX = 0;
+    private static final int OPPONENT_INDEX = 1;
 
     public void runtimeErrorHandler(String reason, int type, String on_fn_name, String on_fn_path) {
         System.err.println("grug runtime error in " + on_fn_name + "(): " + reason + ", in " + on_fn_path);
@@ -110,7 +116,7 @@ class Game {
                     data.humanDlls[i] = file.dll;
 
                     data.humanGlobals[i] = new byte[file.globalsSize];
-                    initGlobals(file.initGlobalsFn, data.humanGlobals[i], i);
+                    callInitGlobals(file.initGlobalsFn, data.humanGlobals[i], i);
                 }
             }
 
@@ -119,7 +125,7 @@ class Game {
                     data.toolDlls[i] = file.dll;
 
                     data.toolGlobals[i] = new byte[file.globalsSize];
-                    initGlobals(file.initGlobalsFn, data.toolGlobals[i], i);
+                    callInitGlobals(file.initGlobalsFn, data.toolGlobals[i], i);
 
                     data.tools[i].onFns = file.onFns;
                 }
@@ -142,6 +148,58 @@ class Game {
         ArrayList<GrugFile> filesDefiningHuman = getTypeFiles("human");
 
         printPlayableHumans(filesDefiningHuman);
+
+        System.out.println("Type the number next to the human you want to play as"
+                + (data.playerHasHuman ? " (type 0 to skip)" : "") + ":\n");
+
+        int playerNumber = readSize();
+        if (playerNumber == -1) {
+            return;
+        }
+
+        if (playerNumber == 0) {
+            if (data.playerHasHuman) {
+                data.state = State.PICKING_TOOLS;
+                return;
+            }
+
+            System.err.println("The minimum number you can enter is 1");
+            return;
+        }
+
+        if (playerNumber > data.typeFiles.size()) {
+            System.err.println("The maximum number you can enter is " + data.typeFiles.size());
+            return;
+        }
+
+        int playerIndex = playerNumber - 1;
+
+        GrugFile file = filesDefiningHuman.get(playerIndex);
+
+        callDefineFn(file.defineFn);
+        Human human = new Human(EntityDefinitions.human);
+
+        if (human.buyGoldValue > data.gold) {
+            System.err.println("You don't have enough gold to pick that human");
+            return;
+        }
+
+        data.gold -= human.buyGoldValue;
+
+        human.id = PLAYER_INDEX;
+        human.opponentId = OPPONENT_INDEX;
+
+        human.maxHealth = human.health;
+
+        data.humans[PLAYER_INDEX] = human;
+        data.humanDlls[PLAYER_INDEX] = file.dll;
+
+        data.humanGlobals[PLAYER_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.humanGlobals[PLAYER_INDEX], PLAYER_INDEX);
+
+        data.playerHasHuman = true;
+
+        data.state = State.PICKING_TOOLS;
     }
 
     private void printPlayableHumans(ArrayList<GrugFile> filesDefiningHuman) {
@@ -154,6 +212,19 @@ class Game {
 
             System.out.println((i + 1) + ". " + human.name + ", costing " + human.buyGoldValue + " gold");
         }
+    }
+
+    private int readSize() {
+        if (!scanner.hasNextInt()) {
+            System.err.println("You didn't enter a valid number");
+            return -1;
+        }
+        int n = scanner.nextInt();
+        if (n < 0) {
+            System.err.println("You can't enter a negative number");
+            return -1;
+        }
+        return n;
     }
 
     private void pickTools() {
@@ -247,13 +318,6 @@ class Data {
 
     public State state = State.PICKING_PLAYER;
 
-    public enum State {
-        PICKING_PLAYER,
-        PICKING_TOOLS,
-        PICKING_OPPONENT,
-        FIGHTING,
-    }
-
     public ArrayList<GrugFile> typeFiles = new ArrayList<GrugFile>();
     public int gold = 400;
 
@@ -262,6 +326,13 @@ class Data {
 
     public Data() {
     }
+}
+
+enum State {
+    PICKING_PLAYER,
+    PICKING_TOOLS,
+    PICKING_OPPONENT,
+    FIGHTING,
 }
 
 class Human {
@@ -276,6 +347,17 @@ class Human {
     public int maxHealth = -1;
 
     public Human() {
+    }
+
+    public Human(Human other) {
+        this.name = other.name;
+        this.health = other.health;
+        this.buyGoldValue = other.buyGoldValue;
+        this.killGoldValue = other.killGoldValue;
+
+        this.id = other.id;
+        this.opponentId = other.opponentId;
+        this.maxHealth = other.maxHealth;
     }
 }
 
