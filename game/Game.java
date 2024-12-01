@@ -3,6 +3,7 @@ package game;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
+import java.lang.Math;
 
 class Game {
     private native void loadGlobalLibraries();
@@ -459,6 +460,22 @@ class Game {
                 data.typeFiles.add(file);
             }
         }
+    }
+
+    private int gameFn_getHumanParent(int toolId) {
+        // TODO: assert toolId < 2
+        return data.tools[toolId].humanParentId;
+    }
+
+    private int gameFn_getOpponent(int humanId) {
+        // TODO: assert humanId < 2
+        return data.humans[humanId].opponentId;
+    }
+
+    private void gameFn_changeHumanHealth(int id, int addedHealth) {
+        // TODO: assert id < 2
+        Human h = data.humans[id];
+        h.health = Math.clamp(h.health + addedHealth, 0, h.maxHealth);
     }
 }
 

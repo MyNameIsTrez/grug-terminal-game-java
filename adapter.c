@@ -29,6 +29,10 @@ jobject tool_definition_obj;
 jfieldID tool_definition_name_fid;
 jfieldID tool_definition_buy_gold_value_fid;
 
+jmethodID game_fn_get_human_parent_id;
+jmethodID game_fn_get_opponent_id;
+jmethodID game_fn_change_human_health_id;
+
 void game_fn_define_human(string c_name, i32 c_health, i32 c_buy_gold_value, i32 c_kill_gold_value) {
     // TODO: Does this cause a memory leak?
     jstring name = (*global_env)->NewStringUTF(global_env, c_name);
@@ -52,25 +56,15 @@ void game_fn_define_tool(string c_name, i32 c_buy_gold_value) {
 }
 
 id game_fn_get_human_parent(id tool_id) {
-    // TODO: REMOVE!
-    (void)tool_id;
-
-    assert(false);
+    return (*global_env)->CallIntMethod(global_env, global_obj, game_fn_get_human_parent_id, tool_id);
 }
 
 id game_fn_get_opponent(id human_id) {
-    // TODO: REMOVE!
-    (void)human_id;
-
-    assert(false);
+    return (*global_env)->CallIntMethod(global_env, global_obj, game_fn_get_opponent_id, human_id);
 }
 
 void game_fn_change_human_health(id human_id, i32 added_health) {
-    // TODO: REMOVE!
-    (void)human_id;
-    (void)added_health;
-
-    assert(false);
+    (*global_env)->CallVoidMethod(global_env, global_obj, game_fn_change_human_health_id, human_id, added_health);
 }
 
 void runtime_error_handler(char *reason, enum grug_runtime_error_type type, char *on_fn_name, char *on_fn_path) {
@@ -258,6 +252,15 @@ JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *env, jobject obj) {
 
     tool_definition_buy_gold_value_fid = (*env)->GetFieldID(env, tool_definition_class, "buyGoldValue", "I");
     assert(tool_definition_buy_gold_value_fid);
+
+    game_fn_get_human_parent_id = (*env)->GetMethodID(env, javaClass, "gameFn_getHumanParent", "(I)I");
+    assert(game_fn_get_human_parent_id);
+
+    game_fn_get_opponent_id = (*env)->GetMethodID(env, javaClass, "gameFn_getOpponent", "(I)I");
+    assert(game_fn_get_opponent_id);
+
+    game_fn_change_human_health_id = (*env)->GetMethodID(env, javaClass, "gameFn_changeHumanHealth", "(II)V");
+    assert(game_fn_change_human_health_id);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, jobject dir_object) {
