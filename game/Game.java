@@ -33,6 +33,8 @@ class Game {
 
     private native void fillGrugFile(GrugFile file, long parentDirAddress, int fileIndex);
 
+    private native void callDefineFn(long defineFn);
+
     private native void tool_onUse(long onFns);
 
     private ReloadData reloadData = new ReloadData();
@@ -127,24 +129,38 @@ class Game {
 
     private void update() {
         switch (data.state) {
-            case PICKING_PLAYER -> pick_player();
-            case PICKING_TOOLS -> pick_tools();
-            case PICKING_OPPONENT -> pick_opponent();
+            case PICKING_PLAYER -> pickPlayer();
+            case PICKING_TOOLS -> pickTools();
+            case PICKING_OPPONENT -> pickOpponent();
             case FIGHTING -> fight();
         }
     }
 
-    private void pick_player() {
+    private void pickPlayer() {
         System.out.println("You have " + data.gold + " gold");
 
-        ArrayList<GrugFile> files_defining_human = getTypeFiles("human");
+        ArrayList<GrugFile> filesDefiningHuman = getTypeFiles("human");
+
+        printPlayableHumans(filesDefiningHuman);
     }
 
-    private void pick_tools() {
+    private void printPlayableHumans(ArrayList<GrugFile> filesDefiningHuman) {
+        for (int i = 0; i < filesDefiningHuman.size(); i++) {
+            GrugFile file = filesDefiningHuman.get(i);
+
+            callDefineFn(file.defineFn);
+
+            Human human = EntityDefinitions.human;
+
+            System.out.println((i + 1) + ". " + human.name + ", costing " + human.buyGoldValue + " gold");
+        }
+    }
+
+    private void pickTools() {
 
     }
 
-    private void pick_opponent() {
+    private void pickOpponent() {
 
     }
 
@@ -273,4 +289,9 @@ class Tool {
 
     public Tool() {
     }
+}
+
+class EntityDefinitions {
+    public static Human human = new Human();
+    public static Tool tool = new Tool();
 }

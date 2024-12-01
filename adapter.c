@@ -15,19 +15,29 @@ jobject global_obj;
 
 jmethodID runtime_error_handler_id;
 
-void game_fn_define_human(string name, i32 health, i32 buy_gold_value, i32 kill_gold_value) {
-    // TODO: REMOVE!
-    (void)name;
-    (void)health;
-    (void)buy_gold_value;
-    (void)kill_gold_value;
+jobject human_definition_obj;
+jfieldID human_definition_name_fid;
+jfieldID human_definition_health_fid;
+jfieldID human_definition_buy_gold_value_fid;
+jfieldID human_definition_kill_gold_value_fid;
 
-    assert(false);
+void game_fn_define_human(string c_name, i32 c_health, i32 c_buy_gold_value, i32 c_kill_gold_value) {
+    // TODO: Does this cause a memory leak?
+    jstring name = (*global_env)->NewStringUTF(global_env, c_name);
+    assert(name);
+    (*global_env)->SetObjectField(global_env, human_definition_obj, human_definition_name_fid, name);
+
+    (*global_env)->SetIntField(global_env, human_definition_obj, human_definition_health_fid, c_health);
+
+    (*global_env)->SetIntField(global_env, human_definition_obj, human_definition_buy_gold_value_fid, c_buy_gold_value);
+
+    (*global_env)->SetIntField(global_env, human_definition_obj, human_definition_kill_gold_value_fid, c_kill_gold_value);
 }
 
-void game_fn_define_tool(string name, i32 buy_gold_value) {
-    (void)name;
-    (void)buy_gold_value;
+void game_fn_define_tool(string c_name, i32 c_buy_gold_value) {
+    // TODO: REMOVE!
+    (void)c_name;
+    (void)c_buy_gold_value;
 
     assert(false);
 }
@@ -191,11 +201,37 @@ JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *env, jobject obj) {
     global_env = env;
     global_obj = obj;
 
-    jclass javaClass = (*global_env)->GetObjectClass(global_env, global_obj);
-    assert(javaClass != NULL);
+    jclass javaClass = (*env)->GetObjectClass(env, obj);
+    assert(javaClass);
 
-    runtime_error_handler_id = (*global_env)->GetMethodID(global_env, javaClass, "runtimeErrorHandler", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
-    assert(runtime_error_handler_id != NULL);
+    runtime_error_handler_id = (*env)->GetMethodID(env, javaClass, "runtimeErrorHandler", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
+    assert(runtime_error_handler_id);
+
+    jclass entity_definitions_class = (*env)->FindClass(env, "game/EntityDefinitions");
+    assert(entity_definitions_class);
+
+    jfieldID human_definition_fid = (*env)->GetStaticFieldID(env, entity_definitions_class, "human", "Lgame/Human;");
+    assert(human_definition_fid);
+
+    human_definition_obj = (*env)->GetStaticObjectField(env, entity_definitions_class, human_definition_fid);
+    assert(human_definition_obj);
+
+    human_definition_obj = (*env)->NewGlobalRef(env, human_definition_obj);
+
+    jclass human_definition_class = (*env)->GetObjectClass(env, human_definition_obj);
+    assert(human_definition_class);
+
+    human_definition_name_fid = (*env)->GetFieldID(env, human_definition_class, "name", "Ljava/lang/String;");
+    assert(human_definition_name_fid);
+
+    human_definition_health_fid = (*env)->GetFieldID(env, human_definition_class, "health", "I");
+    assert(human_definition_health_fid);
+
+    human_definition_buy_gold_value_fid = (*env)->GetFieldID(env, human_definition_class, "buyGoldValue", "I");
+    assert(human_definition_buy_gold_value_fid);
+
+    human_definition_kill_gold_value_fid = (*env)->GetFieldID(env, human_definition_class, "killGoldValue", "I");
+    assert(human_definition_kill_gold_value_fid);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, jobject dir_object) {
@@ -278,6 +314,13 @@ JNIEXPORT void JNICALL Java_game_Game_fillGrugFile(JNIEnv *env, jobject obj, job
 
     jfieldID resource_mtimes_fid = (*env)->GetFieldID(env, file_class, "resourceMtimes", "J");
     (*env)->SetLongField(env, file_object, resource_mtimes_fid, (jlong)file.resource_mtimes);
+}
+
+JNIEXPORT void JNICALL Java_game_Game_callDefineFn(JNIEnv *env, jobject obj, jlong define_fn) {
+    (void)env;
+    (void)obj;
+
+    ((grug_define_fn_t)define_fn)();
 }
 
 JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlong on_fns) {
