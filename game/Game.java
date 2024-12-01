@@ -1,6 +1,7 @@
 package game;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 class Game {
@@ -36,8 +37,6 @@ class Game {
 
     private native void callDefineFn(long defineFn);
 
-    private native void tool_onUse(long onFns);
-
     private ReloadData reloadData = new ReloadData();
 
     private Data data = new Data();
@@ -46,6 +45,10 @@ class Game {
 
     private static final int PLAYER_INDEX = 0;
     private static final int OPPONENT_INDEX = 1;
+
+    Random rand = new Random();
+
+    private native void tool_onUse(long onFns);
 
     public void runtimeErrorHandler(String reason, int type, String on_fn_name, String on_fn_path) {
         System.err.println("grug runtime error in " + on_fn_name + "(): " + reason + ", in " + on_fn_path);
@@ -167,8 +170,8 @@ class Game {
             return;
         }
 
-        if (playerNumber > data.typeFiles.size()) {
-            System.err.println("The maximum number you can enter is " + data.typeFiles.size());
+        if (playerNumber > filesDefiningHuman.size()) {
+            System.err.println("The maximum number you can enter is " + filesDefiningHuman.size());
             return;
         }
 
@@ -218,6 +221,7 @@ class Game {
 
     private int readSize() {
         if (!scanner.hasNextInt()) {
+            scanner.next();
             System.err.println("You didn't enter a valid number");
             return -1;
         }
@@ -254,8 +258,8 @@ class Game {
             return;
         }
 
-        if (toolNumber > data.typeFiles.size()) {
-            System.err.println("The maximum number you can enter is " + data.typeFiles.size());
+        if (toolNumber > filesDefiningTool.size()) {
+            System.err.println("The maximum number you can enter is " + filesDefiningTool.size());
             return;
         }
 
@@ -301,7 +305,81 @@ class Game {
     }
 
     private void pickOpponent() {
+        System.out.println("You have " + data.gold + " gold\n");
 
+        ArrayList<GrugFile> filesDefiningHuman = getTypeFiles("human");
+
+        printOpponentHumans(filesDefiningHuman);
+
+        System.out.println("Type the number next to the human you want to fight:");
+
+        int opponentNumber = readSize();
+        if (opponentNumber == -1) {
+            return;
+        }
+
+        if (opponentNumber == 0) {
+            System.err.println("The minimum number you can enter is 1");
+            return;
+        }
+
+        if (opponentNumber > filesDefiningHuman.size()) {
+            System.err.println("The maximum number you can enter is " + filesDefiningHuman.size());
+            return;
+        }
+
+        int opponentIndex = opponentNumber - 1;
+
+        GrugFile file = filesDefiningHuman.get(opponentIndex);
+
+        callDefineFn(file.defineFn);
+        Human human = new Human(EntityDefinitions.human);
+
+        human.id = OPPONENT_INDEX;
+        human.opponentId = PLAYER_INDEX;
+
+        human.maxHealth = human.health;
+
+        data.humans[OPPONENT_INDEX] = human;
+        data.humanDlls[OPPONENT_INDEX] = file.dll;
+
+        data.humanGlobals[OPPONENT_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.humanGlobals[OPPONENT_INDEX], OPPONENT_INDEX);
+
+        // Give the opponent a random tool
+        ArrayList<GrugFile> filesDefiningTool = getTypeFiles("tool");
+        int toolIndex = rand.nextInt(filesDefiningTool.size());
+
+        file = filesDefiningTool.get(toolIndex);
+
+        callDefineFn(file.defineFn);
+        Tool tool = new Tool(EntityDefinitions.tool);
+
+        tool.onFns = file.onFns;
+
+        tool.humanParentId = OPPONENT_INDEX;
+
+        data.tools[OPPONENT_INDEX] = tool;
+        data.toolDlls[OPPONENT_INDEX] = file.dll;
+
+        data.toolGlobals[OPPONENT_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.toolGlobals[OPPONENT_INDEX], OPPONENT_INDEX);
+
+        data.state = State.FIGHTING;
+    }
+
+    private void printOpponentHumans(ArrayList<GrugFile> filesDefiningHuman) {
+        for (int i = 0; i < filesDefiningHuman.size(); i++) {
+            GrugFile file = filesDefiningHuman.get(i);
+
+            callDefineFn(file.defineFn);
+
+            Human human = EntityDefinitions.human;
+
+            System.out.println((i + 1) + ". " + human.name + ", worth " + human.killGoldValue + " gold when killed");
+        }
+
+        System.out.println();
     }
 
     private void fight() {
