@@ -118,6 +118,26 @@ JNIEXPORT jstring JNICALL Java_game_Game_errorPath(JNIEnv *env, jobject obj) {
     return (*global_env)->NewStringUTF(global_env, grug_error.path);
 }
 
+JNIEXPORT jstring JNICALL Java_game_Game_onFnName(JNIEnv *env, jobject obj) {
+    (void)env;
+    (void)obj;
+
+    // TODO: This string should be freed at some point
+    // TODO: An idea is having a global table containing the handful of possible error strings,
+    // TODO: or having a single global string that gets replaced (freed) by every next error
+    return (*global_env)->NewStringUTF(global_env, grug_on_fn_name);
+}
+
+JNIEXPORT jstring JNICALL Java_game_Game_onFnPath(JNIEnv *env, jobject obj) {
+    (void)env;
+    (void)obj;
+
+    // TODO: This string should be freed at some point
+    // TODO: An idea is having a global table containing the handful of possible error strings,
+    // TODO: or having a single global string that gets replaced (freed) by every next error
+    return (*global_env)->NewStringUTF(global_env, grug_on_fn_path);
+}
+
 JNIEXPORT jint JNICALL Java_game_Game_errorGrugCLineNumber(JNIEnv *env, jobject obj) {
     (void)env;
     (void)obj;

@@ -18,6 +18,10 @@ class Game {
 
     private native String errorPath();
 
+    private native String onFnName();
+
+    private native String onFnPath();
+
     private native int errorGrugCLineNumber();
 
     private native boolean grugRegenerateModifiedMods();
@@ -463,18 +467,43 @@ class Game {
     }
 
     private int gameFn_getHumanParent(int toolId) {
-        // TODO: assert toolId < 2
+        if (toolId >= 2) {
+            System.err.println(
+                    "grug runtime error in " + onFnName()
+                            + "(): the tool_id argument of get_human_parent() was " + toolId
+                            + ", while the function only expects it to be up to 2, in " + onFnPath());
+            return -1;
+        }
         return data.tools[toolId].humanParentId;
     }
 
     private int gameFn_getOpponent(int humanId) {
-        // TODO: assert humanId < 2
+        if (humanId >= 2) {
+            System.err.println(
+                    "grug runtime error in " + onFnName()
+                            + "(): the human_id argument of get_opponent() was " + humanId
+                            + ", while the function only expects it to be up to 2, in " + onFnPath());
+            return -1;
+        }
         return data.humans[humanId].opponentId;
     }
 
-    private void gameFn_changeHumanHealth(int id, int addedHealth) {
-        // TODO: assert id < 2
-        Human h = data.humans[id];
+    private void gameFn_changeHumanHealth(int humanId, int addedHealth) {
+        if (humanId >= 2) {
+            System.err.println(
+                    "grug runtime error in " + onFnName()
+                            + "(): the human_id argument of change_human_health() was " + humanId
+                            + ", while the function only expects it to be up to 2, in " + onFnPath());
+            return;
+        }
+        if (addedHealth == -42) {
+            System.err.println(
+                    "grug runtime error in " + onFnName()
+                            + "(): the added_health argument of change_human_health() was -42, while the function deems that number to be forbidden, in "
+                            + onFnPath());
+            return;
+        }
+        Human h = data.humans[humanId];
         h.health = Math.clamp(h.health + addedHealth, 0, h.maxHealth);
     }
 }
