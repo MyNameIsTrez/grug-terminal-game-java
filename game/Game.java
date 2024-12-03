@@ -42,6 +42,10 @@ class Game {
 
     private native void callDefineFn(long defineFn);
 
+    private native void toggleOnFnsMode();
+
+    private native boolean areOnFnsInSafeMode();
+
     private ReloadData reloadData = new ReloadData();
 
     private Data data = new Data();
@@ -227,16 +231,25 @@ class Game {
     }
 
     private int readSize() {
+        if (scanner.hasNext("f")) {
+            scanner.next();
+            toggleOnFnsMode();
+            System.out.println("Toggled grug to " + (areOnFnsInSafeMode() ? "safe" : "fast") + " mode");
+            return -1;
+        }
+
         if (!scanner.hasNextInt()) {
             scanner.next();
             System.err.println("You didn't enter a valid number");
             return -1;
         }
+
         int n = scanner.nextInt();
         if (n < 0) {
             System.err.println("You can't enter a negative number");
             return -1;
         }
+
         return n;
     }
 

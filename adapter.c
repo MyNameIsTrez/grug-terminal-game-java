@@ -372,6 +372,20 @@ JNIEXPORT void JNICALL Java_game_Game_callDefineFn(JNIEnv *env, jobject obj, jlo
     ((grug_define_fn_t)define_fn)();
 }
 
+JNIEXPORT void JNICALL Java_game_Game_toggleOnFnsMode(JNIEnv *env, jobject obj) {
+    (void)env;
+    (void)obj;
+
+    grug_toggle_on_fns_mode();
+}
+
+JNIEXPORT jboolean JNICALL Java_game_Game_areOnFnsInSafeMode(JNIEnv *env, jobject obj) {
+    (void)env;
+    (void)obj;
+
+    return grug_are_on_fns_in_safe_mode();
+}
+
 JNIEXPORT jboolean JNICALL Java_game_Game_tool_1hasOnUse(JNIEnv *env, jobject obj, jlong on_fns) {
     (void)env;
     (void)obj;
