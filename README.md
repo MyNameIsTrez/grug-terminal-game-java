@@ -10,7 +10,3 @@ See [my blog post](https://mynameistrez.github.io/2024/02/29/creating-the-perfec
 4. Hit `F5` to run the game.
 
 Type `f` to toggle grug between `safe` and `fast` mode.
-
-## Development notes
-
-- `javap -s Game` prints the method signatures in `Game.java` (which shows `runtime_error_handler()` having the signature `(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V`)
