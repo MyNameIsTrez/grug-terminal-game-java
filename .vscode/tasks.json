@@ -7,7 +7,8 @@
                 "Compile libgrug.so",
                 "Compile game_Game.h",
                 "Compile libglobal_library_loader.so",
-                "Compile libadapter.so",
+                "Regenerate adapter.c",
+                "Compile libadapter.so"
             ],
             "dependsOrder": "sequence",
             "group": "build"
@@ -29,7 +30,7 @@
                 "-Wshadow",
                 "-Wfatal-errors",
                 "-g",
-                "-rdynamic",
+                "-rdynamic"
             ],
             "hide": true
         },
@@ -42,7 +43,7 @@
                 "classes",
                 "-h",
                 "headers",
-                "game/Game.java",
+                "game/Game.java"
             ],
             "hide": true
         },
@@ -64,8 +65,19 @@
                 "-Wfatal-errors",
                 "-g",
                 "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include",
-                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux",
+                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux"
             ],
+            "hide": true
+        },
+        {
+            "label": "Regenerate adapter.c",
+            "command": "python3",
+            "args": [
+                "grug-adapter-for-java/generate.py",
+                "mod_api.json",
+                "adapter.c"
+            ],
+            "problemMatcher": [],
             "hide": true
         },
         {
@@ -86,9 +98,9 @@
                 "-Wfatal-errors",
                 "-g",
                 "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include",
-                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux",
+                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux"
             ],
             "hide": true
-        },
+        }
     ]
 }

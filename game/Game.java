@@ -57,7 +57,7 @@ class Game {
 
     Random rand = new Random();
 
-    private native boolean tool_hasOnUse(long onFns);
+    private native boolean tool_has_onUse(long onFns);
 
     private native void tool_onUse(long onFns, byte[] globals);
 
@@ -415,7 +415,7 @@ class Game {
         System.out.println("You have " + player.health + " health");
         System.out.println("The opponent has " + opponent.health + " health");
 
-        if (tool_hasOnUse(playerTool.onFns)) {
+        if (tool_has_onUse(playerTool.onFns)) {
             System.out.println("You use your " + playerTool.name);
             tool_onUse(playerTool.onFns, playerToolGlobals);
             sleep(1);
@@ -433,7 +433,7 @@ class Game {
             return;
         }
 
-        if (tool_hasOnUse(opponentTool.onFns)) {
+        if (tool_has_onUse(opponentTool.onFns)) {
             System.out.println("The opponent uses their " + opponentTool.name);
             tool_onUse(opponentTool.onFns, opponentToolGlobals);
             sleep(1);

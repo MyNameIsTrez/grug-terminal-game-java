@@ -5,12 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "java",
             "name": "Run",
+            "type": "java",
             "request": "launch",
             "mainClass": "game.Game",
             "vmArgs": "-Djava.library.path=.:grug",
             "projectName": "grug-terminal-game-java_7946e7cb"
+        },
+        {
+            "name": "Run generate.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceRoot}/grug-adapter-for-java/generate.py",
+            "args": [
+                "mod_api.json",
+                "generated_adapter.c"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }

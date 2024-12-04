@@ -11,7 +11,7 @@ typedef int32_t i32;
 typedef uint64_t id;
 
 struct tool_on_fns {
-	void (*use)(void *globals);
+    void (*on_use)(void *globals);
 };
 
 JNIEnv *global_env;
@@ -34,9 +34,7 @@ jmethodID game_fn_get_opponent_id;
 jmethodID game_fn_change_human_health_id;
 
 void game_fn_define_human(string c_name, i32 c_health, i32 c_buy_gold_value, i32 c_kill_gold_value) {
-    // TODO: Does this cause a memory leak?
     jstring name = (*global_env)->NewStringUTF(global_env, c_name);
-    assert(name);
     (*global_env)->SetObjectField(global_env, human_definition_obj, human_definition_name_fid, name);
 
     (*global_env)->SetIntField(global_env, human_definition_obj, human_definition_health_fid, c_health);
@@ -47,9 +45,7 @@ void game_fn_define_human(string c_name, i32 c_health, i32 c_buy_gold_value, i32
 }
 
 void game_fn_define_tool(string c_name, i32 c_buy_gold_value) {
-    // TODO: Does this cause a memory leak?
     jstring name = (*global_env)->NewStringUTF(global_env, c_name);
-    assert(name);
     (*global_env)->SetObjectField(global_env, tool_definition_obj, tool_definition_name_fid, name);
 
     (*global_env)->SetIntField(global_env, tool_definition_obj, tool_definition_buy_gold_value_fid, c_buy_gold_value);
@@ -68,7 +64,6 @@ void game_fn_change_human_health(id human_id, i32 added_health) {
 }
 
 void runtime_error_handler(char *reason, enum grug_runtime_error_type type, char *on_fn_name, char *on_fn_path) {
-    // TODO: These strings should probably be freed at the end of this function
     jstring java_reason = (*global_env)->NewStringUTF(global_env, reason);
     jint java_type = type;
     jstring java_on_fn_name = (*global_env)->NewStringUTF(global_env, on_fn_name);
@@ -102,9 +97,6 @@ JNIEXPORT jstring JNICALL Java_game_Game_errorMsg(JNIEnv *env, jobject obj) {
     (void)env;
     (void)obj;
 
-    // TODO: This string should be freed at some point
-    // TODO: An idea is having a global table containing the handful of possible error strings,
-    // TODO: or having a single global string that gets replaced (freed) by every next error
     return (*global_env)->NewStringUTF(global_env, grug_error.msg);
 }
 
@@ -112,9 +104,6 @@ JNIEXPORT jstring JNICALL Java_game_Game_errorPath(JNIEnv *env, jobject obj) {
     (void)env;
     (void)obj;
 
-    // TODO: This string should be freed at some point
-    // TODO: An idea is having a global table containing the handful of possible error strings,
-    // TODO: or having a single global string that gets replaced (freed) by every next error
     return (*global_env)->NewStringUTF(global_env, grug_error.path);
 }
 
@@ -122,9 +111,6 @@ JNIEXPORT jstring JNICALL Java_game_Game_onFnName(JNIEnv *env, jobject obj) {
     (void)env;
     (void)obj;
 
-    // TODO: This string should be freed at some point
-    // TODO: An idea is having a global table containing the handful of possible error strings,
-    // TODO: or having a single global string that gets replaced (freed) by every next error
     return (*global_env)->NewStringUTF(global_env, grug_on_fn_name);
 }
 
@@ -132,9 +118,6 @@ JNIEXPORT jstring JNICALL Java_game_Game_onFnPath(JNIEnv *env, jobject obj) {
     (void)env;
     (void)obj;
 
-    // TODO: This string should be freed at some point
-    // TODO: An idea is having a global table containing the handful of possible error strings,
-    // TODO: or having a single global string that gets replaced (freed) by every next error
     return (*global_env)->NewStringUTF(global_env, grug_on_fn_path);
 }
 
@@ -167,7 +150,6 @@ JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, j
     jclass reload_data_class = (*env)->GetObjectClass(env, reload_data_object);
 
     jfieldID path_fid = (*env)->GetFieldID(env, reload_data_class, "path", "Ljava/lang/String;");
-    // TODO: Does this cause a memory leak?
     jstring path = (*env)->NewStringUTF(env, c_reload_data.path);
     (*env)->SetObjectField(env, reload_data_object, path_fid, path);
 
@@ -182,7 +164,6 @@ JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, j
     struct grug_file c_file = c_reload_data.file;
 
     jfieldID name_fid = (*env)->GetFieldID(env, file_class, "name", "Ljava/lang/String;");
-    // TODO: Does this cause a memory leak?
     jstring name = (*env)->NewStringUTF(env, c_file.name);
     (*env)->SetObjectField(env, file_object, name_fid, name);
 
@@ -199,7 +180,6 @@ JNIEXPORT void JNICALL Java_game_Game_fillReloadData(JNIEnv *env, jobject obj, j
     (*env)->SetLongField(env, file_object, init_globals_fn_fid, (jlong)c_file.init_globals_fn);
 
     jfieldID define_type_fid = (*env)->GetFieldID(env, file_class, "defineType", "Ljava/lang/String;");
-    // TODO: Does this cause a memory leak?
     jstring define_type = (*env)->NewStringUTF(env, c_file.define_type);
     (*env)->SetObjectField(env, file_object, define_type_fid, define_type);
 
@@ -225,62 +205,44 @@ JNIEXPORT void JNICALL Java_game_Game_init(JNIEnv *env, jobject obj) {
     global_obj = obj;
 
     jclass javaClass = (*env)->GetObjectClass(env, obj);
-    assert(javaClass);
 
     runtime_error_handler_id = (*env)->GetMethodID(env, javaClass, "runtimeErrorHandler", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
-    assert(runtime_error_handler_id);
 
     jclass entity_definitions_class = (*env)->FindClass(env, "game/EntityDefinitions");
-    assert(entity_definitions_class);
 
     jfieldID human_definition_fid = (*env)->GetStaticFieldID(env, entity_definitions_class, "human", "Lgame/Human;");
-    assert(human_definition_fid);
 
     human_definition_obj = (*env)->GetStaticObjectField(env, entity_definitions_class, human_definition_fid);
-    assert(human_definition_obj);
 
     human_definition_obj = (*env)->NewGlobalRef(env, human_definition_obj);
 
     jclass human_definition_class = (*env)->GetObjectClass(env, human_definition_obj);
-    assert(human_definition_class);
 
     human_definition_name_fid = (*env)->GetFieldID(env, human_definition_class, "name", "Ljava/lang/String;");
-    assert(human_definition_name_fid);
 
     human_definition_health_fid = (*env)->GetFieldID(env, human_definition_class, "health", "I");
-    assert(human_definition_health_fid);
 
     human_definition_buy_gold_value_fid = (*env)->GetFieldID(env, human_definition_class, "buyGoldValue", "I");
-    assert(human_definition_buy_gold_value_fid);
 
     human_definition_kill_gold_value_fid = (*env)->GetFieldID(env, human_definition_class, "killGoldValue", "I");
-    assert(human_definition_kill_gold_value_fid);
 
     jfieldID tool_definition_fid = (*env)->GetStaticFieldID(env, entity_definitions_class, "tool", "Lgame/Tool;");
-    assert(tool_definition_fid);
 
     tool_definition_obj = (*env)->GetStaticObjectField(env, entity_definitions_class, tool_definition_fid);
-    assert(tool_definition_obj);
 
     tool_definition_obj = (*env)->NewGlobalRef(env, tool_definition_obj);
 
     jclass tool_definition_class = (*env)->GetObjectClass(env, tool_definition_obj);
-    assert(tool_definition_class);
 
     tool_definition_name_fid = (*env)->GetFieldID(env, tool_definition_class, "name", "Ljava/lang/String;");
-    assert(tool_definition_name_fid);
 
     tool_definition_buy_gold_value_fid = (*env)->GetFieldID(env, tool_definition_class, "buyGoldValue", "I");
-    assert(tool_definition_buy_gold_value_fid);
 
     game_fn_get_human_parent_id = (*env)->GetMethodID(env, javaClass, "gameFn_getHumanParent", "(I)I");
-    assert(game_fn_get_human_parent_id);
 
     game_fn_get_opponent_id = (*env)->GetMethodID(env, javaClass, "gameFn_getOpponent", "(I)I");
-    assert(game_fn_get_opponent_id);
 
     game_fn_change_human_health_id = (*env)->GetMethodID(env, javaClass, "gameFn_changeHumanHealth", "(II)V");
-    assert(game_fn_change_human_health_id);
 }
 
 JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, jobject dir_object) {
@@ -289,7 +251,6 @@ JNIEXPORT void JNICALL Java_game_Game_fillRootGrugDir(JNIEnv *env, jobject obj, 
     jclass dir_class = (*env)->GetObjectClass(env, dir_object);
 
     jfieldID name_fid = (*env)->GetFieldID(env, dir_class, "name", "Ljava/lang/String;");
-    // TODO: Does this cause a memory leak?
     jstring name = (*env)->NewStringUTF(env, grug_mods.name);
     (*env)->SetObjectField(env, dir_object, name_fid, name);
 
@@ -313,7 +274,6 @@ JNIEXPORT void JNICALL Java_game_Game_fillGrugDir(JNIEnv *env, jobject obj, jobj
     struct grug_mod_dir dir = parent_dir->dirs[dir_index];
 
     jfieldID name_fid = (*env)->GetFieldID(env, dir_class, "name", "Ljava/lang/String;");
-    // TODO: Does this cause a memory leak?
     jstring name = (*env)->NewStringUTF(env, dir.name);
     (*env)->SetObjectField(env, dir_object, name_fid, name);
 
@@ -337,7 +297,6 @@ JNIEXPORT void JNICALL Java_game_Game_fillGrugFile(JNIEnv *env, jobject obj, job
     struct grug_file file = parent_dir->files[file_index];
 
     jfieldID name_fid = (*env)->GetFieldID(env, file_class, "name", "Ljava/lang/String;");
-    // TODO: Does this cause a memory leak?
     jstring name = (*env)->NewStringUTF(env, file.name);
     (*env)->SetObjectField(env, file_object, name_fid, name);
 
@@ -354,7 +313,6 @@ JNIEXPORT void JNICALL Java_game_Game_fillGrugFile(JNIEnv *env, jobject obj, job
     (*env)->SetLongField(env, file_object, init_globals_fn_fid, (jlong)file.init_globals_fn);
 
     jfieldID define_type_fid = (*env)->GetFieldID(env, file_class, "defineType", "Ljava/lang/String;");
-    // TODO: Does this cause a memory leak?
     jstring define_type = (*env)->NewStringUTF(env, file.define_type);
     (*env)->SetObjectField(env, file_object, define_type_fid, define_type);
 
@@ -386,11 +344,11 @@ JNIEXPORT jboolean JNICALL Java_game_Game_areOnFnsInSafeMode(JNIEnv *env, jobjec
     return grug_are_on_fns_in_safe_mode();
 }
 
-JNIEXPORT jboolean JNICALL Java_game_Game_tool_1hasOnUse(JNIEnv *env, jobject obj, jlong on_fns) {
+JNIEXPORT jboolean JNICALL Java_game_Game_tool_1has_1onUse(JNIEnv *env, jobject obj, jlong on_fns) {
     (void)env;
     (void)obj;
 
-    return ((struct tool_on_fns *)on_fns)->use != NULL;
+    return ((struct tool_on_fns *)on_fns)->on_use != NULL;
 }
 
 JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlong on_fns, jbyteArray globals) {
@@ -398,7 +356,7 @@ JNIEXPORT void JNICALL Java_game_Game_tool_1onUse(JNIEnv *env, jobject obj, jlon
 
     jbyte *globals_bytes = (*env)->GetByteArrayElements(env, globals, NULL);
 
-    ((struct tool_on_fns *)on_fns)->use(globals_bytes);
+    ((struct tool_on_fns *)on_fns)->on_use(globals_bytes);
 
     (*env)->ReleaseByteArrayElements(env, globals, globals_bytes, 0);
 }
