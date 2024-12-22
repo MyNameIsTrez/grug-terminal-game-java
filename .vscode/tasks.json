@@ -75,7 +75,9 @@
             "args": [
                 "grug-adapter-for-java/generate.py",
                 "mod_api.json",
-                "adapter.c"
+                "adapter.c",
+                "game",
+                "Game"
             ],
             "problemMatcher": [],
             "hide": true
