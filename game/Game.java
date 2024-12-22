@@ -8,8 +8,6 @@ import java.lang.Math;
 class Game {
     private native void loadGlobalLibraries();
 
-    private native void grugSetRuntimeErrorHandler();
-
     private native boolean errorHasChanged();
 
     private native boolean loadingErrorInGrugFile();
@@ -32,7 +30,9 @@ class Game {
 
     private native void callInitGlobals(long initGlobalsFn, byte[] globals, int id);
 
-    private native void init();
+    private native void initGrugAdapter();
+
+    private native boolean grugInit(String modApiJsonPath, String modsDirPath);
 
     private native void fillRootGrugDir(GrugDir root);
 
@@ -75,9 +75,11 @@ class Game {
 
         System.loadLibrary("adapter");
 
-        init();
+        initGrugAdapter();
 
-        grugSetRuntimeErrorHandler();
+        if (grugInit("mod_api.json", "mods")) {
+            throw new RuntimeException("grugInit() error: " + errorMsg() + " (detected in grug.c:" + errorGrugCLineNumber() + ")");
+        }
 
         while (true) {
             if (grugRegenerateModifiedMods()) {
