@@ -28,7 +28,7 @@ class Game {
 
     private native void fillReloadData(ReloadData reloadData, int i);
 
-    private native void callInitGlobals(long initGlobalsFn, byte[] globals, int id);
+    private native void callInitGlobals(long initGlobalsFn, byte[] globals, long id);
 
     private native void initGrugAdapter();
 
@@ -193,7 +193,7 @@ class Game {
         GrugFile file = filesDefiningHuman.get(playerIndex);
 
         callDefineFn(file.defineFn);
-        Human human = new Human(EntityDefinitions.human);
+        GrugHuman human = new GrugHuman(EntityDefinitions.human);
 
         if (human.buyGoldValue > data.gold) {
             System.err.println("You don't have enough gold to pick that human");
@@ -224,7 +224,7 @@ class Game {
 
             callDefineFn(file.defineFn);
 
-            Human human = EntityDefinitions.human;
+            GrugHuman human = EntityDefinitions.human;
 
             System.out.println((i + 1) + ". " + human.name + ", costing " + human.buyGoldValue + " gold");
         }
@@ -290,7 +290,7 @@ class Game {
         GrugFile file = filesDefiningTool.get(toolIndex);
 
         callDefineFn(file.defineFn);
-        Tool tool = new Tool(EntityDefinitions.tool);
+        GrugTool tool = new GrugTool(EntityDefinitions.tool);
 
         tool.onFns = file.onFns;
 
@@ -318,7 +318,7 @@ class Game {
 
             callDefineFn(file.defineFn);
 
-            Tool tool = EntityDefinitions.tool;
+            GrugTool tool = EntityDefinitions.tool;
 
             System.out.println((i + 1) + ". " + tool.name + ", costing " + tool.buyGoldValue + " gold");
         }
@@ -355,7 +355,7 @@ class Game {
         GrugFile file = filesDefiningHuman.get(opponentIndex);
 
         callDefineFn(file.defineFn);
-        Human human = new Human(EntityDefinitions.human);
+        GrugHuman human = new GrugHuman(EntityDefinitions.human);
 
         human.id = OPPONENT_INDEX;
         human.opponentId = PLAYER_INDEX;
@@ -375,7 +375,7 @@ class Game {
         file = filesDefiningTool.get(toolIndex);
 
         callDefineFn(file.defineFn);
-        Tool tool = new Tool(EntityDefinitions.tool);
+        GrugTool tool = new GrugTool(EntityDefinitions.tool);
 
         tool.onFns = file.onFns;
 
@@ -396,7 +396,7 @@ class Game {
 
             callDefineFn(file.defineFn);
 
-            Human human = EntityDefinitions.human;
+            GrugHuman human = EntityDefinitions.human;
 
             System.out.println((i + 1) + ". " + human.name + ", worth " + human.killGoldValue + " gold when killed");
         }
@@ -405,14 +405,14 @@ class Game {
     }
 
     private void fight() {
-        Human player = data.humans[PLAYER_INDEX];
-        Human opponent = data.humans[OPPONENT_INDEX];
+        GrugHuman player = data.humans[PLAYER_INDEX];
+        GrugHuman opponent = data.humans[OPPONENT_INDEX];
 
         byte[] playerToolGlobals = data.toolGlobals[PLAYER_INDEX];
         byte[] opponentToolGlobals = data.toolGlobals[OPPONENT_INDEX];
 
-        Tool playerTool = data.tools[PLAYER_INDEX];
-        Tool opponentTool = data.tools[OPPONENT_INDEX];
+        GrugTool playerTool = data.tools[PLAYER_INDEX];
+        GrugTool opponentTool = data.tools[OPPONENT_INDEX];
 
         System.out.println("You have " + player.health + " health");
         System.out.println("The opponent has " + opponent.health + " health");
@@ -481,7 +481,7 @@ class Game {
         }
     }
 
-    private int gameFn_getHumanParent(int toolId) {
+    private long gameFn_getHumanParent(long toolId) {
         if (toolId >= 2) {
             System.err.println(
                     "grug runtime error in " + onFnName()
@@ -489,10 +489,10 @@ class Game {
                             + ", while the function only expects it to be up to 2, in " + onFnPath());
             return -1;
         }
-        return data.tools[toolId].humanParentId;
+        return data.tools[(int)toolId].humanParentId;
     }
 
-    private int gameFn_getOpponent(int humanId) {
+    private long gameFn_getOpponent(long humanId) {
         if (humanId >= 2) {
             System.err.println(
                     "grug runtime error in " + onFnName()
@@ -500,10 +500,10 @@ class Game {
                             + ", while the function only expects it to be up to 2, in " + onFnPath());
             return -1;
         }
-        return data.humans[humanId].opponentId;
+        return data.humans[(int)humanId].opponentId;
     }
 
-    private void gameFn_changeHumanHealth(int humanId, int addedHealth) {
+    private void gameFn_changeHumanHealth(long humanId, int addedHealth) {
         if (humanId >= 2) {
             System.err.println(
                     "grug runtime error in " + onFnName()
@@ -518,7 +518,7 @@ class Game {
                             + onFnPath());
             return;
         }
-        Human h = data.humans[humanId];
+        GrugHuman h = data.humans[(int)humanId];
         h.health = Math.clamp(h.health + addedHealth, 0, h.maxHealth);
     }
 }
@@ -562,11 +562,11 @@ class GrugFile {
 }
 
 class Data {
-    public Human[] humans = { new Human(), new Human() };
+    public GrugHuman[] humans = { new GrugHuman(), new GrugHuman() };
     public long[] humanDlls = new long[2];
     public byte[][] humanGlobals = new byte[2][];
 
-    public Tool[] tools = { new Tool(), new Tool() };
+    public GrugTool[] tools = { new GrugTool(), new GrugTool() };
     public long[] toolDlls = new long[2];
     public byte[][] toolGlobals = new byte[2][];
 
@@ -589,21 +589,21 @@ enum State {
     FIGHTING,
 }
 
-class Human {
+class GrugHuman {
     public String name = "";
     public int health = -1;
     public int buyGoldValue = -1;
     public int killGoldValue = -1;
 
     // These are not initialized by mods
-    public int id = -1;
-    public int opponentId = -1;
+    public long id = -1;
+    public long opponentId = -1;
     public int maxHealth = -1;
 
-    public Human() {
+    public GrugHuman() {
     }
 
-    public Human(Human other) {
+    public GrugHuman(GrugHuman other) {
         this.name = other.name;
         this.health = other.health;
         this.buyGoldValue = other.buyGoldValue;
@@ -615,18 +615,18 @@ class Human {
     }
 }
 
-class Tool {
+class GrugTool {
     public String name = "";
     public int buyGoldValue = -1;
 
     // These are not initialized by mods
-    public int humanParentId = 0;
+    public long humanParentId = 0;
     public long onFns = 0;
 
-    public Tool() {
+    public GrugTool() {
     }
 
-    public Tool(Tool other) {
+    public GrugTool(GrugTool other) {
         this.name = other.name;
         this.buyGoldValue = other.buyGoldValue;
 
@@ -636,6 +636,6 @@ class Tool {
 }
 
 class EntityDefinitions {
-    public static Human human = new Human();
-    public static Tool tool = new Tool();
+    public static GrugHuman human = new GrugHuman();
+    public static GrugTool tool = new GrugTool();
 }
