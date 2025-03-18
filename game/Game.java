@@ -40,8 +40,6 @@ class Game {
 
     private native void fillGrugFile(GrugFile file, long parentDirAddress, int fileIndex);
 
-    private native void callDefineFn(long defineFn);
-
     private native void toggleOnFnsMode();
 
     private native boolean areOnFnsInSafeMode();
@@ -57,8 +55,19 @@ class Game {
 
     Random rand = new Random();
 
-    private native boolean tool_has_onUse(long onFns);
+    private native boolean human_has_onSpawn(long onFns);
+    private native void human_onSpawn(long onFns, byte[] globals);
 
+    private native boolean human_has_onDespawn(long onFns);
+    private native void human_onDespawn(long onFns, byte[] globals);
+
+    private native boolean tool_has_onSpawn(long onFns);
+    private native void tool_onSpawn(long onFns, byte[] globals);
+
+    private native boolean tool_has_onDespawn(long onFns);
+    private native void tool_onDespawn(long onFns, byte[] globals);
+
+    private native boolean tool_has_onUse(long onFns);
     private native void tool_onUse(long onFns, byte[] globals);
 
     public void runtimeErrorHandler(String reason, int type, String on_fn_name, String on_fn_path) {
@@ -78,7 +87,7 @@ class Game {
         initGrugAdapter();
 
         if (grugInit("mod_api.json", "mods")) {
-            throw new RuntimeException("grugInit() error: " + errorMsg() + " (detected in grug.c:" + errorGrugCLineNumber() + ")");
+            throw new RuntimeException("grugInit() error: " + errorMsg() + " (detected by grug.c:" + errorGrugCLineNumber() + ")");
         }
 
         while (true) {
@@ -86,9 +95,9 @@ class Game {
                 if (errorHasChanged()) {
                     if (loadingErrorInGrugFile()) {
                         System.err.println("grug loading error: " + errorMsg() + ", in " + errorPath()
-                                + " (detected in grug.c:" + errorGrugCLineNumber() + ")");
+                                + " (detected by grug.c:" + errorGrugCLineNumber() + ")");
                     } else {
-                        System.err.println("grug loading error: " + errorMsg() + " (detected in grug.c:"
+                        System.err.println("grug loading error: " + errorMsg() + " (detected by grug.c:"
                                 + errorGrugCLineNumber() + ")");
                     }
                 }
@@ -133,6 +142,8 @@ class Game {
 
                     data.humanGlobals[i] = new byte[file.globalsSize];
                     callInitGlobals(file.initGlobalsFn, data.humanGlobals[i], i);
+
+                    data.humans[i].onFns = file.onFns;
                 }
             }
 
@@ -161,9 +172,11 @@ class Game {
     private void pickPlayer() {
         System.out.println("You have " + data.gold + " gold\n");
 
-        ArrayList<GrugFile> filesDefiningHuman = getTypeFiles("human");
+        ArrayList<GrugFile> humanFiles = getTypeFiles("human");
 
-        printPlayableHumans(filesDefiningHuman);
+        if (printPlayableHumans(humanFiles)) {
+            return;
+        }
 
         System.out.println("Type the number next to the human you want to play as"
                 + (data.playerHasHuman ? " (type 0 to skip)" : "") + ":");
@@ -183,24 +196,35 @@ class Game {
             return;
         }
 
-        if (playerNumber > filesDefiningHuman.size()) {
-            System.err.println("The maximum number you can enter is " + filesDefiningHuman.size());
+        if (playerNumber > humanFiles.size()) {
+            System.err.println("The maximum number you can enter is " + humanFiles.size());
             return;
+        }
+
+        if (human_has_onDespawn(data.humans[PLAYER_INDEX].onFns)) {
+            callHumanOnDespawn(data.humans[PLAYER_INDEX].onFns, data.humanGlobals[PLAYER_INDEX]);
         }
 
         int playerIndex = playerNumber - 1;
 
-        GrugFile file = filesDefiningHuman.get(playerIndex);
+        GrugFile file = humanFiles.get(playerIndex);
 
-        callDefineFn(file.defineFn);
-        GrugHuman human = new GrugHuman(EntityDefinitions.human);
+        data.humanGlobals[PLAYER_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.humanGlobals[PLAYER_INDEX], PLAYER_INDEX);
+
+        if (callHumanOnSpawn(file.entity, file.onFns, data.humanGlobals[PLAYER_INDEX])) {
+            return;
+        }
+
+        GrugHuman human = new GrugHuman(OnSpawnData.human);
 
         if (human.buyGoldValue > data.gold) {
             System.err.println("You don't have enough gold to pick that human");
             return;
         }
-
         data.gold -= human.buyGoldValue;
+
+        human.onFns = file.onFns;
 
         human.id = PLAYER_INDEX;
         human.opponentId = OPPONENT_INDEX;
@@ -210,26 +234,31 @@ class Game {
         data.humans[PLAYER_INDEX] = human;
         data.humanDlls[PLAYER_INDEX] = file.dll;
 
-        data.humanGlobals[PLAYER_INDEX] = new byte[file.globalsSize];
-        callInitGlobals(file.initGlobalsFn, data.humanGlobals[PLAYER_INDEX], PLAYER_INDEX);
-
         data.playerHasHuman = true;
 
         data.state = State.PICKING_TOOLS;
     }
 
-    private void printPlayableHumans(ArrayList<GrugFile> filesDefiningHuman) {
-        for (int i = 0; i < filesDefiningHuman.size(); i++) {
-            GrugFile file = filesDefiningHuman.get(i);
+    private boolean printPlayableHumans(ArrayList<GrugFile> humanFiles) {
+        for (int i = 0; i < humanFiles.size(); i++) {
+            GrugFile file = humanFiles.get(i);
 
-            callDefineFn(file.defineFn);
+            byte[] globals = new byte[file.globalsSize];
+            callInitGlobals(file.initGlobalsFn, globals, 0);
 
-            GrugHuman human = EntityDefinitions.human;
+            if (callHumanOnSpawn(file.entity, file.onFns, globals)) {
+                return true;
+            }
+
+            GrugHuman human = OnSpawnData.human;
 
             System.out.println((i + 1) + ". " + human.name + ", costing " + human.buyGoldValue + " gold");
+
+            callHumanOnDespawn(file.onFns, globals);
         }
 
         System.out.println();
+        return false;
     }
 
     private int readSize() {
@@ -258,9 +287,11 @@ class Game {
     private void pickTools() {
         System.out.println("You have " + data.gold + " gold\n");
 
-        ArrayList<GrugFile> filesDefiningTool = getTypeFiles("tool");
+        ArrayList<GrugFile> toolFiles = getTypeFiles("tool");
 
-        printTools(filesDefiningTool);
+        if (printTools(toolFiles)) {
+            return;
+        }
 
         System.out.println("Type the number next to the tool you want to buy"
                 + (data.playerHasTool ? " (type 0 to skip)" : "") + ":");
@@ -280,58 +311,76 @@ class Game {
             return;
         }
 
-        if (toolNumber > filesDefiningTool.size()) {
-            System.err.println("The maximum number you can enter is " + filesDefiningTool.size());
+        if (toolNumber > toolFiles.size()) {
+            System.err.println("The maximum number you can enter is " + toolFiles.size());
             return;
+        }
+
+        if (tool_has_onDespawn(data.tools[PLAYER_INDEX].onFns)) {
+            callToolOnDespawn(data.tools[PLAYER_INDEX].onFns, data.toolGlobals[PLAYER_INDEX]);
         }
 
         int toolIndex = toolNumber - 1;
 
-        GrugFile file = filesDefiningTool.get(toolIndex);
+        GrugFile file = toolFiles.get(toolIndex);
 
-        callDefineFn(file.defineFn);
-        GrugTool tool = new GrugTool(EntityDefinitions.tool);
+        data.toolGlobals[PLAYER_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.toolGlobals[PLAYER_INDEX], PLAYER_INDEX);
 
-        tool.onFns = file.onFns;
+        if (callToolOnSpawn(file.entity, file.onFns, data.toolGlobals[PLAYER_INDEX])) {
+            return;
+        }
+
+        GrugTool tool = new GrugTool(OnSpawnData.tool);
 
         if (tool.buyGoldValue > data.gold) {
             System.err.println("You don't have enough gold to buy that tool");
             return;
         }
-
         data.gold -= tool.buyGoldValue;
+
+        tool.onFns = file.onFns;
 
         tool.humanParentId = PLAYER_INDEX;
 
         data.tools[PLAYER_INDEX] = tool;
         data.toolDlls[PLAYER_INDEX] = file.dll;
 
-        data.toolGlobals[PLAYER_INDEX] = new byte[file.globalsSize];
-        callInitGlobals(file.initGlobalsFn, data.toolGlobals[PLAYER_INDEX], PLAYER_INDEX);
-
         data.playerHasTool = true;
+
+        data.state = State.PICKING_OPPONENT;
     }
 
-    private void printTools(ArrayList<GrugFile> filesDefiningTool) {
-        for (int i = 0; i < filesDefiningTool.size(); i++) {
-            GrugFile file = filesDefiningTool.get(i);
+    private boolean printTools(ArrayList<GrugFile> toolFiles) {
+        for (int i = 0; i < toolFiles.size(); i++) {
+            GrugFile file = toolFiles.get(i);
 
-            callDefineFn(file.defineFn);
+            byte[] globals = new byte[file.globalsSize];
+            callInitGlobals(file.initGlobalsFn, globals, 0);
 
-            GrugTool tool = EntityDefinitions.tool;
+            if (callToolOnSpawn(file.entity, file.onFns, globals)) {
+                return true;
+            }
+
+            GrugTool tool = OnSpawnData.tool;
 
             System.out.println((i + 1) + ". " + tool.name + ", costing " + tool.buyGoldValue + " gold");
+
+            callToolOnDespawn(file.onFns, globals);
         }
 
         System.out.println();
+        return false;
     }
 
     private void pickOpponent() {
         System.out.println("You have " + data.gold + " gold\n");
 
-        ArrayList<GrugFile> filesDefiningHuman = getTypeFiles("human");
+        ArrayList<GrugFile> humanFiles = getTypeFiles("human");
 
-        printOpponentHumans(filesDefiningHuman);
+        if (printOpponentHumans(humanFiles)) {
+            return;
+        }
 
         System.out.println("Type the number next to the human you want to fight:");
 
@@ -345,17 +394,25 @@ class Game {
             return;
         }
 
-        if (opponentNumber > filesDefiningHuman.size()) {
-            System.err.println("The maximum number you can enter is " + filesDefiningHuman.size());
+        if (opponentNumber > humanFiles.size()) {
+            System.err.println("The maximum number you can enter is " + humanFiles.size());
             return;
         }
 
         int opponentIndex = opponentNumber - 1;
 
-        GrugFile file = filesDefiningHuman.get(opponentIndex);
+        GrugFile file = humanFiles.get(opponentIndex);
 
-        callDefineFn(file.defineFn);
-        GrugHuman human = new GrugHuman(EntityDefinitions.human);
+        data.humanGlobals[OPPONENT_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.humanGlobals[OPPONENT_INDEX], OPPONENT_INDEX);
+
+        if (callHumanOnSpawn(file.entity, file.onFns, data.humanGlobals[OPPONENT_INDEX])) {
+            return;
+        }
+
+        GrugHuman human = new GrugHuman(OnSpawnData.human);
+
+        human.onFns = file.onFns;
 
         human.id = OPPONENT_INDEX;
         human.opponentId = PLAYER_INDEX;
@@ -365,17 +422,20 @@ class Game {
         data.humans[OPPONENT_INDEX] = human;
         data.humanDlls[OPPONENT_INDEX] = file.dll;
 
-        data.humanGlobals[OPPONENT_INDEX] = new byte[file.globalsSize];
-        callInitGlobals(file.initGlobalsFn, data.humanGlobals[OPPONENT_INDEX], OPPONENT_INDEX);
-
         // Give the opponent a random tool
-        ArrayList<GrugFile> filesDefiningTool = getTypeFiles("tool");
-        int toolIndex = rand.nextInt(filesDefiningTool.size());
+        ArrayList<GrugFile> toolFiles = getTypeFiles("tool");
+        int toolIndex = rand.nextInt(toolFiles.size());
 
-        file = filesDefiningTool.get(toolIndex);
+        file = toolFiles.get(toolIndex);
 
-        callDefineFn(file.defineFn);
-        GrugTool tool = new GrugTool(EntityDefinitions.tool);
+        data.toolGlobals[OPPONENT_INDEX] = new byte[file.globalsSize];
+        callInitGlobals(file.initGlobalsFn, data.toolGlobals[OPPONENT_INDEX], OPPONENT_INDEX);
+
+        if (callToolOnSpawn(file.entity, file.onFns, data.toolGlobals[OPPONENT_INDEX])) {
+            return;
+        }
+
+        GrugTool tool = new GrugTool(OnSpawnData.tool);
 
         tool.onFns = file.onFns;
 
@@ -384,35 +444,98 @@ class Game {
         data.tools[OPPONENT_INDEX] = tool;
         data.toolDlls[OPPONENT_INDEX] = file.dll;
 
-        data.toolGlobals[OPPONENT_INDEX] = new byte[file.globalsSize];
-        callInitGlobals(file.initGlobalsFn, data.toolGlobals[OPPONENT_INDEX], OPPONENT_INDEX);
-
         data.state = State.FIGHTING;
     }
 
-    private void printOpponentHumans(ArrayList<GrugFile> filesDefiningHuman) {
-        for (int i = 0; i < filesDefiningHuman.size(); i++) {
-            GrugFile file = filesDefiningHuman.get(i);
+    private boolean printOpponentHumans(ArrayList<GrugFile> humanFiles) {
+        for (int i = 0; i < humanFiles.size(); i++) {
+            GrugFile file = humanFiles.get(i);
 
-            callDefineFn(file.defineFn);
+            byte[] globals = new byte[file.globalsSize];
+            callInitGlobals(file.initGlobalsFn, globals, 0);
 
-            GrugHuman human = EntityDefinitions.human;
+            if (callHumanOnSpawn(file.entity, file.onFns, globals)) {
+                return true;
+            }
+
+            GrugHuman human = OnSpawnData.human;
 
             System.out.println((i + 1) + ". " + human.name + ", worth " + human.killGoldValue + " gold when killed");
+
+            callHumanOnDespawn(file.onFns, globals);
         }
 
         System.out.println();
+        return false;
+    }
+
+    private boolean callToolOnSpawn(String entity, long onFns, byte[] globals) {
+        if (!tool_has_onSpawn(onFns)) {
+            System.err.println(entity + " is missing on_spawn()");
+            return true;
+        }
+
+        setToolNameCalled = false;
+        setToolBuyGoldValueCalled = false;
+
+        tool_onSpawn(onFns, globals);
+    
+        if (!setToolNameCalled) {
+            System.err.println(entity + " its on_spawn() did not call set_tool_name()");
+            return true;
+        }
+        if (!setToolBuyGoldValueCalled) {
+            System.err.println(entity + " its on_spawn() did not call set_tool_buy_gold_value()");
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean callHumanOnSpawn(String entity, long onFns, byte[] globals) {
+        if (!human_has_onSpawn(onFns)) {
+            System.err.println(entity + " is missing on_spawn()");
+            return true;
+        }
+
+        setHumanNameCalled = false;
+        setHumanHealthCalled = false;
+        setHumanBuyGoldValueCalled = false;
+        setHumanKillGoldValueCalled = false;
+    
+        human_onSpawn(onFns, globals);
+    
+        if (!setHumanNameCalled) {
+            System.err.println(entity + " its on_spawn() did not call set_human_name()");
+            return true;
+        }
+        if (!setHumanHealthCalled) {
+            System.err.println(entity + " its on_spawn() did not call set_human_health()");
+            return true;
+        }
+        if (!setHumanBuyGoldValueCalled) {
+            System.err.println(entity + " its on_spawn() did not call set_human_buy_gold_value()");
+            return true;
+        }
+        if (!setHumanKillGoldValueCalled) {
+            System.err.println(entity + " its on_spawn() did not call set_human_kill_gold_value()");
+            return true;
+        }
+
+        return false;
     }
 
     private void fight() {
         GrugHuman player = data.humans[PLAYER_INDEX];
         GrugHuman opponent = data.humans[OPPONENT_INDEX];
 
-        byte[] playerToolGlobals = data.toolGlobals[PLAYER_INDEX];
-        byte[] opponentToolGlobals = data.toolGlobals[OPPONENT_INDEX];
-
         GrugTool playerTool = data.tools[PLAYER_INDEX];
         GrugTool opponentTool = data.tools[OPPONENT_INDEX];
+
+        byte[] opponentHumanGlobals = data.humanGlobals[OPPONENT_INDEX];
+
+        byte[] playerToolGlobals = data.toolGlobals[PLAYER_INDEX];
+        byte[] opponentToolGlobals = data.toolGlobals[OPPONENT_INDEX];
 
         System.out.println("You have " + player.health + " health");
         System.out.println("The opponent has " + opponent.health + " health");
@@ -428,6 +551,7 @@ class Game {
 
         if (opponent.health <= 0) {
             System.out.println("The opponent died!");
+            callHumanOnDespawn(opponent.onFns, opponentHumanGlobals);
             sleep(1);
             data.state = State.PICKING_PLAYER;
             data.gold += opponent.killGoldValue;
@@ -452,33 +576,111 @@ class Game {
         }
     }
 
-    private ArrayList<GrugFile> getTypeFiles(String defineType) {
+    private void callToolOnDespawn(long onFns, byte[] globals) {
+        if (tool_has_onDespawn(onFns)) {
+            tool_onDespawn(onFns, globals);
+        }
+    }
+
+    private void callHumanOnDespawn(long onFns, byte[] globals) {
+        if (human_has_onDespawn(onFns)) {
+            human_onDespawn(onFns, globals);
+        }
+    }
+
+    private ArrayList<GrugFile> getTypeFiles(String entityType) {
         data.typeFiles.clear();
 
         GrugDir root = new GrugDir();
         fillRootGrugDir(root);
 
-        getTypeFilesImpl(root, defineType);
+        getTypeFilesImpl(root, entityType);
 
         return data.typeFiles;
     }
 
-    private void getTypeFilesImpl(GrugDir dir, String defineType) {
+    private void getTypeFilesImpl(GrugDir dir, String entityType) {
         for (int i = 0; i < dir.dirsSize; i++) {
             GrugDir subdir = new GrugDir();
             fillGrugDir(subdir, dir.address, i);
 
-            getTypeFilesImpl(subdir, defineType);
+            getTypeFilesImpl(subdir, entityType);
         }
 
         for (int i = 0; i < dir.filesSize; i++) {
             GrugFile file = new GrugFile();
             fillGrugFile(file, dir.address, i);
 
-            if (file.defineType.equals(defineType)) {
+            if (file.entityType.equals(entityType)) {
                 data.typeFiles.add(file);
             }
         }
+    }
+
+    private boolean setHumanNameCalled;
+    private void gameFn_setHumanName(String name) {
+        if (setHumanNameCalled) {
+            System.err.println("set_human_name() was called twice by on_spawn()");
+            return;
+        }
+        setHumanNameCalled = true;
+
+        OnSpawnData.human.name = name;
+    }
+
+    private boolean setHumanHealthCalled;
+    private void gameFn_setHumanHealth(int health) {
+        if (setHumanHealthCalled) {
+            System.err.println("set_human_health() was called twice by on_spawn()");
+            return;
+        }
+        setHumanHealthCalled = true;
+
+        OnSpawnData.human.health = health;
+    }
+
+    private boolean setHumanBuyGoldValueCalled;
+    private void gameFn_setHumanBuyGoldValue(int buyGoldValue) {
+        if (setHumanBuyGoldValueCalled) {
+            System.err.println("set_human_buy_gold_value() was called twice by on_spawn()");
+            return;
+        }
+        setHumanBuyGoldValueCalled = true;
+
+        OnSpawnData.human.buyGoldValue = buyGoldValue;
+    }
+
+    private boolean setHumanKillGoldValueCalled;
+    private void gameFn_setHumanKillGoldValue(int killGoldValue) {
+        if (setHumanKillGoldValueCalled) {
+            System.err.println("set_human_kill_gold_value() was called twice by on_spawn()");
+            return;
+        }
+        setHumanKillGoldValueCalled = true;
+
+        OnSpawnData.human.killGoldValue = killGoldValue;
+    }
+
+    private boolean setToolNameCalled;
+    private void gameFn_setToolName(String name) {
+        if (setToolNameCalled) {
+            System.err.println("set_tool_name() was called twice by on_spawn()");
+            return;
+        }
+        setToolNameCalled = true;
+
+        OnSpawnData.tool.name = name;
+    }
+
+    private boolean setToolBuyGoldValueCalled;
+    private void gameFn_setToolBuyGoldValue(int buyGoldValue) {
+        if (setToolBuyGoldValueCalled) {
+            System.err.println("set_tool_buy_gold_value() was called twice by on_spawn()");
+            return;
+        }
+        setToolBuyGoldValueCalled = true;
+
+        OnSpawnData.tool.buyGoldValue = buyGoldValue;
     }
 
     private long gameFn_getHumanParent(long toolId) {
@@ -521,6 +723,10 @@ class Game {
         GrugHuman h = data.humans[(int)humanId];
         h.health = Math.clamp(h.health + addedHealth, 0, h.maxHealth);
     }
+
+    private void gameFn_printString(String msg) {
+        System.out.println(msg);
+    }
 }
 
 class ReloadData {
@@ -549,11 +755,11 @@ class GrugDir {
 
 class GrugFile {
     public String name;
+    public String entity;
+    public String entityType;
     public long dll;
-    public long defineFn;
     public int globalsSize;
     public long initGlobalsFn;
-    public String defineType;
     public long onFns;
     public long resourceMtimes;
 
@@ -599,6 +805,7 @@ class GrugHuman {
     public long id = -1;
     public long opponentId = -1;
     public int maxHealth = -1;
+    public long onFns = 0;
 
     public GrugHuman() {
     }
@@ -612,6 +819,7 @@ class GrugHuman {
         this.id = other.id;
         this.opponentId = other.opponentId;
         this.maxHealth = other.maxHealth;
+        this.onFns = other.onFns;
     }
 }
 
@@ -635,7 +843,7 @@ class GrugTool {
     }
 }
 
-class EntityDefinitions {
+class OnSpawnData {
     public static GrugHuman human = new GrugHuman();
     public static GrugTool tool = new GrugTool();
 }
