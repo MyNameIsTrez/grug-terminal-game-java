@@ -7,6 +7,6 @@ See [my blog post](https://mynameistrez.github.io/2024/02/29/creating-the-perfec
 1. Clone this repository and open it in VS Code.
 2. Run `git submodule update --init` to clone the `grug/grug.c`, `grug/grug.h`, and `grug-adapter-for-java/generate.py` files (for your own game you can just drop these files directly into your project).
 3. Hit `Ctrl+Shift+B` to get a list of the available build tasks, and run the `Recompile` task.
-4. Hit `F5` to run the game.
+4. Hit `F5` to run the game, or manually run `java -Xcheck:jni -Djava.library.path=.:grug game/Game.java`.
 
 Type `f` to toggle grug between `safe` and `fast` mode.

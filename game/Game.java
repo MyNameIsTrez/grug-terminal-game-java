@@ -3,7 +3,6 @@ package game;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
-import java.lang.Math;
 
 class Game {
     private native void loadGlobalLibraries();
@@ -15,10 +14,6 @@ class Game {
     private native String errorMsg();
 
     private native String errorPath();
-
-    private native String onFnName();
-
-    private native String onFnPath();
 
     private native int errorGrugCLineNumber();
 
@@ -44,38 +39,51 @@ class Game {
 
     private native boolean areOnFnsInSafeMode();
 
-    private ReloadData reloadData = new ReloadData();
-
-    private Data data = new Data();
+    private native void gameFunctionErrorHappened(String message);
 
     private Scanner scanner = new Scanner(System.in);
+
+    private native boolean human_has_on_spawn(long onFns);
+    private native void human_on_spawn(long onFns, byte[] globals);
+
+    private native boolean human_has_on_despawn(long onFns);
+    private native void human_on_despawn(long onFns, byte[] globals);
+
+    private native boolean tool_has_on_spawn(long onFns);
+    private native void tool_on_spawn(long onFns, byte[] globals);
+
+    private native boolean tool_has_on_despawn(long onFns);
+    private native void tool_on_despawn(long onFns, byte[] globals);
+
+    private native boolean tool_has_on_use(long onFns);
+    private native void tool_on_use(long onFns, byte[] globals);
+
+    public static Game game;
 
     private static final int PLAYER_INDEX = 0;
     private static final int OPPONENT_INDEX = 1;
 
+    private ReloadData reloadData = new ReloadData();
+
+    public static Data data = new Data();
+
     Random rand = new Random();
 
-    private native boolean human_has_onSpawn(long onFns);
-    private native void human_onSpawn(long onFns, byte[] globals);
+    public static boolean setHumanNameCalled;
+    public static boolean setHumanHealthCalled;
+    public static boolean setHumanBuyGoldValueCalled;
+    public static boolean setHumanKillGoldValueCalled;
 
-    private native boolean human_has_onDespawn(long onFns);
-    private native void human_onDespawn(long onFns, byte[] globals);
-
-    private native boolean tool_has_onSpawn(long onFns);
-    private native void tool_onSpawn(long onFns, byte[] globals);
-
-    private native boolean tool_has_onDespawn(long onFns);
-    private native void tool_onDespawn(long onFns, byte[] globals);
-
-    private native boolean tool_has_onUse(long onFns);
-    private native void tool_onUse(long onFns, byte[] globals);
+    public static boolean setToolNameCalled;
+    public static boolean setToolBuyGoldValueCalled;
 
     public void runtimeErrorHandler(String reason, int type, String on_fn_name, String on_fn_path) {
         System.err.println("grug runtime error in " + on_fn_name + "(): " + reason + ", in " + on_fn_path);
     }
 
     public static void main(String[] args) {
-        new Game();
+        game = new Game();
+        game.run();
     }
 
     public Game() {
@@ -89,7 +97,9 @@ class Game {
         if (grugInit("mod_api.json", "mods")) {
             throw new RuntimeException("grugInit() error: " + errorMsg() + " (detected by grug.c:" + errorGrugCLineNumber() + ")");
         }
+    }
 
+    private void run() {
         while (true) {
             if (grugRegenerateModifiedMods()) {
                 if (errorHasChanged()) {
@@ -201,7 +211,7 @@ class Game {
             return;
         }
 
-        if (human_has_onDespawn(data.humans[PLAYER_INDEX].onFns)) {
+        if (data.humans[PLAYER_INDEX].onFns != 0) {
             callHumanOnDespawn(data.humans[PLAYER_INDEX].onFns, data.humanGlobals[PLAYER_INDEX]);
         }
 
@@ -316,7 +326,7 @@ class Game {
             return;
         }
 
-        if (tool_has_onDespawn(data.tools[PLAYER_INDEX].onFns)) {
+        if (data.tools[PLAYER_INDEX].onFns != 0) {
             callToolOnDespawn(data.tools[PLAYER_INDEX].onFns, data.toolGlobals[PLAYER_INDEX]);
         }
 
@@ -470,7 +480,7 @@ class Game {
     }
 
     private boolean callToolOnSpawn(String entity, long onFns, byte[] globals) {
-        if (!tool_has_onSpawn(onFns)) {
+        if (!tool_has_on_spawn(onFns)) {
             System.err.println(entity + " is missing on_spawn()");
             return true;
         }
@@ -478,7 +488,7 @@ class Game {
         setToolNameCalled = false;
         setToolBuyGoldValueCalled = false;
 
-        tool_onSpawn(onFns, globals);
+        tool_on_spawn(onFns, globals);
     
         if (!setToolNameCalled) {
             System.err.println(entity + " its on_spawn() did not call set_tool_name()");
@@ -493,7 +503,7 @@ class Game {
     }
 
     private boolean callHumanOnSpawn(String entity, long onFns, byte[] globals) {
-        if (!human_has_onSpawn(onFns)) {
+        if (!human_has_on_spawn(onFns)) {
             System.err.println(entity + " is missing on_spawn()");
             return true;
         }
@@ -502,9 +512,9 @@ class Game {
         setHumanHealthCalled = false;
         setHumanBuyGoldValueCalled = false;
         setHumanKillGoldValueCalled = false;
-    
-        human_onSpawn(onFns, globals);
-    
+
+        human_on_spawn(onFns, globals);
+
         if (!setHumanNameCalled) {
             System.err.println(entity + " its on_spawn() did not call set_human_name()");
             return true;
@@ -540,9 +550,9 @@ class Game {
         System.out.println("You have " + player.health + " health");
         System.out.println("The opponent has " + opponent.health + " health");
 
-        if (tool_has_onUse(playerTool.onFns)) {
+        if (tool_has_on_use(playerTool.onFns)) {
             System.out.println("You use your " + playerTool.name);
-            tool_onUse(playerTool.onFns, playerToolGlobals);
+            tool_on_use(playerTool.onFns, playerToolGlobals);
             sleep(1);
         } else {
             System.out.println("You don't know what to do with your " + playerTool.name);
@@ -559,9 +569,9 @@ class Game {
             return;
         }
 
-        if (tool_has_onUse(opponentTool.onFns)) {
+        if (tool_has_on_use(opponentTool.onFns)) {
             System.out.println("The opponent uses their " + opponentTool.name);
-            tool_onUse(opponentTool.onFns, opponentToolGlobals);
+            tool_on_use(opponentTool.onFns, opponentToolGlobals);
             sleep(1);
         } else {
             System.out.println("The opponent doesn't know what to do with their " + opponentTool.name);
@@ -577,14 +587,14 @@ class Game {
     }
 
     private void callToolOnDespawn(long onFns, byte[] globals) {
-        if (tool_has_onDespawn(onFns)) {
-            tool_onDespawn(onFns, globals);
+        if (tool_has_on_despawn(onFns)) {
+            tool_on_despawn(onFns, globals);
         }
     }
 
     private void callHumanOnDespawn(long onFns, byte[] globals) {
-        if (human_has_onDespawn(onFns)) {
-            human_onDespawn(onFns, globals);
+        if (human_has_on_despawn(onFns)) {
+            human_on_despawn(onFns, globals);
         }
     }
 
@@ -617,115 +627,8 @@ class Game {
         }
     }
 
-    private boolean setHumanNameCalled;
-    private void gameFn_setHumanName(String name) {
-        if (setHumanNameCalled) {
-            System.err.println("set_human_name() was called twice by on_spawn()");
-            return;
-        }
-        setHumanNameCalled = true;
-
-        OnSpawnData.human.name = name;
-    }
-
-    private boolean setHumanHealthCalled;
-    private void gameFn_setHumanHealth(int health) {
-        if (setHumanHealthCalled) {
-            System.err.println("set_human_health() was called twice by on_spawn()");
-            return;
-        }
-        setHumanHealthCalled = true;
-
-        OnSpawnData.human.health = health;
-    }
-
-    private boolean setHumanBuyGoldValueCalled;
-    private void gameFn_setHumanBuyGoldValue(int buyGoldValue) {
-        if (setHumanBuyGoldValueCalled) {
-            System.err.println("set_human_buy_gold_value() was called twice by on_spawn()");
-            return;
-        }
-        setHumanBuyGoldValueCalled = true;
-
-        OnSpawnData.human.buyGoldValue = buyGoldValue;
-    }
-
-    private boolean setHumanKillGoldValueCalled;
-    private void gameFn_setHumanKillGoldValue(int killGoldValue) {
-        if (setHumanKillGoldValueCalled) {
-            System.err.println("set_human_kill_gold_value() was called twice by on_spawn()");
-            return;
-        }
-        setHumanKillGoldValueCalled = true;
-
-        OnSpawnData.human.killGoldValue = killGoldValue;
-    }
-
-    private boolean setToolNameCalled;
-    private void gameFn_setToolName(String name) {
-        if (setToolNameCalled) {
-            System.err.println("set_tool_name() was called twice by on_spawn()");
-            return;
-        }
-        setToolNameCalled = true;
-
-        OnSpawnData.tool.name = name;
-    }
-
-    private boolean setToolBuyGoldValueCalled;
-    private void gameFn_setToolBuyGoldValue(int buyGoldValue) {
-        if (setToolBuyGoldValueCalled) {
-            System.err.println("set_tool_buy_gold_value() was called twice by on_spawn()");
-            return;
-        }
-        setToolBuyGoldValueCalled = true;
-
-        OnSpawnData.tool.buyGoldValue = buyGoldValue;
-    }
-
-    private long gameFn_getHumanParent(long toolId) {
-        if (toolId >= 2) {
-            System.err.println(
-                    "grug runtime error in " + onFnName()
-                            + "(): the tool_id argument of get_human_parent() was " + toolId
-                            + ", while the function only expects it to be up to 2, in " + onFnPath());
-            return -1;
-        }
-        return data.tools[(int)toolId].humanParentId;
-    }
-
-    private long gameFn_getOpponent(long humanId) {
-        if (humanId >= 2) {
-            System.err.println(
-                    "grug runtime error in " + onFnName()
-                            + "(): the human_id argument of get_opponent() was " + humanId
-                            + ", while the function only expects it to be up to 2, in " + onFnPath());
-            return -1;
-        }
-        return data.humans[(int)humanId].opponentId;
-    }
-
-    private void gameFn_changeHumanHealth(long humanId, int addedHealth) {
-        if (humanId >= 2) {
-            System.err.println(
-                    "grug runtime error in " + onFnName()
-                            + "(): the human_id argument of change_human_health() was " + humanId
-                            + ", while the function only expects it to be up to 2, in " + onFnPath());
-            return;
-        }
-        if (addedHealth == -42) {
-            System.err.println(
-                    "grug runtime error in " + onFnName()
-                            + "(): the added_health argument of change_human_health() was -42, while the function deems that number to be forbidden, in "
-                            + onFnPath());
-            return;
-        }
-        GrugHuman h = data.humans[(int)humanId];
-        h.health = Math.clamp(h.health + addedHealth, 0, h.maxHealth);
-    }
-
-    private void gameFn_printString(String msg) {
-        System.out.println(msg);
+    public static void gameFunctionErrorHappened(String gameFunctionName, String message) {
+        game.gameFunctionErrorHappened(gameFunctionName + "(): " + message);
     }
 }
 
