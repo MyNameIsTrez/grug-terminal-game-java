@@ -27,7 +27,7 @@ class Game {
 
     private native void initGrugAdapter();
 
-    private native boolean grugInit(String modApiJsonPath, String modsDirPath);
+    private native boolean grugInit(String modApiJsonPath, String modsDirPath, String dllDirPath, long onFnTimeLimitMs);
 
     private native void fillRootGrugDir(GrugDir root);
 
@@ -94,7 +94,7 @@ class Game {
 
         initGrugAdapter();
 
-        if (grugInit("mod_api.json", "mods")) {
+        if (grugInit("mod_api.json", "mods", "mod_dlls", 10)) {
             throw new RuntimeException("grugInit() error: " + errorMsg() + " (detected by grug.c:" + errorGrugCLineNumber() + ")");
         }
     }
@@ -660,11 +660,13 @@ class GrugFile {
     public String name;
     public String entity;
     public String entityType;
+
     public long dll;
+
     public int globalsSize;
     public long initGlobalsFn;
+
     public long onFns;
-    public long resourceMtimes;
 
     public GrugFile() {
     }
