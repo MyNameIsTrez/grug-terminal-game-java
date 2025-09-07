@@ -5,6 +5,7 @@
             "label": "Recompile",
             "dependsOn": [
                 "Compile libgrug.so",
+                "Create classes/ directory",
                 "Compile game_Game.h",
                 "Compile libglobal_library_loader.so",
                 "Regenerate adapter.c",
@@ -15,8 +16,8 @@
         },
         {
             "label": "Compile libgrug.so",
-            "command": "gcc",
             "type": "shell",
+            "command": "gcc",
             "args": [
                 "grug/grug.c",
                 "-o",
@@ -35,9 +36,19 @@
             "hide": true
         },
         {
-            "label": "Compile game_Game.h",
-            "command": "javac",
+            "label": "Create classes/ directory",
             "type": "shell",
+            "command": "mkdir",
+            "args": [
+                "-p",
+                "classes"
+            ],
+            "hide": true
+        },
+        {
+            "label": "Compile game_Game.h",
+            "type": "shell",
+            "command": "javac",
             "args": [
                 "-d",
                 "classes",
@@ -49,23 +60,11 @@
         },
         {
             "label": "Compile libglobal_library_loader.so",
-            "command": "gcc",
             "type": "shell",
+            "command": "bash",
             "args": [
-                "global_library_loader.c",
-                "-o",
-                "libglobal_library_loader.so",
-                "-shared",
-                "-fPIC",
-                "-Wall",
-                "-Wextra",
-                "-Werror",
-                "-Wpedantic",
-                "-Wshadow",
-                "-Wfatal-errors",
-                "-g",
-                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include",
-                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux"
+                "-c",
+                "gcc global_library_loader.c -o libglobal_library_loader.so -shared -fPIC -Wall -Wextra -Werror -Wpedantic -Wshadow -Wfatal-errors -g -I$(dirname \"$(dirname \"$(readlink -f \"$(which javac)\")\")\")/include -I$(dirname \"$(dirname \"$(readlink -f \"$(which javac)\")\")\")/include/linux"
             ],
             "hide": true
         },
@@ -84,23 +83,11 @@
         },
         {
             "label": "Compile libadapter.so",
-            "command": "gcc",
             "type": "shell",
+            "command": "bash",
             "args": [
-                "adapter.c",
-                "-o",
-                "libadapter.so",
-                "-shared",
-                "-fPIC",
-                "-Wall",
-                "-Wextra",
-                "-Werror",
-                "-Wpedantic",
-                "-Wshadow",
-                "-Wfatal-errors",
-                "-g",
-                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include",
-                "-I/usr/lib/jvm/jdk-23.0.1-oracle-x64/include/linux"
+                "-c",
+                "gcc adapter.c -o libadapter.so -shared -fPIC -Wall -Wextra -Werror -Wpedantic -Wshadow -Wfatal-errors -g -I$(dirname \"$(dirname \"$(readlink -f \"$(which javac)\")\")\")/include -I$(dirname \"$(dirname \"$(readlink -f \"$(which javac)\")\")\")/include/linux"
             ],
             "hide": true
         }

@@ -94,7 +94,9 @@ class GameFunctions {
             return;
         }
         GrugHuman h = Game.data.humans[(int)humanId];
-        h.health = Math.clamp(h.health + addedHealth, 0, h.maxHealth);
+        h.health = h.health + addedHealth;
+        // Clamp health
+        h.health = Math.max(0, Math.min(h.maxHealth, h.health));
     }
 
     public static void print_string(String msg) {

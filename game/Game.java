@@ -43,20 +43,20 @@ class Game {
 
     private Scanner scanner = new Scanner(System.in);
 
-    private native boolean human_has_on_spawn(long onFns);
-    private native void human_on_spawn(long onFns, byte[] globals);
+    private native boolean Human_has_on_spawn(long onFns);
+    private native void Human_on_spawn(long onFns, byte[] globals);
 
-    private native boolean human_has_on_despawn(long onFns);
-    private native void human_on_despawn(long onFns, byte[] globals);
+    private native boolean Human_has_on_despawn(long onFns);
+    private native void Human_on_despawn(long onFns, byte[] globals);
 
-    private native boolean tool_has_on_spawn(long onFns);
-    private native void tool_on_spawn(long onFns, byte[] globals);
+    private native boolean Tool_has_on_spawn(long onFns);
+    private native void Tool_on_spawn(long onFns, byte[] globals);
 
-    private native boolean tool_has_on_despawn(long onFns);
-    private native void tool_on_despawn(long onFns, byte[] globals);
+    private native boolean Tool_has_on_despawn(long onFns);
+    private native void Tool_on_despawn(long onFns, byte[] globals);
 
-    private native boolean tool_has_on_use(long onFns);
-    private native void tool_on_use(long onFns, byte[] globals);
+    private native boolean Tool_has_on_use(long onFns);
+    private native void Tool_on_use(long onFns, byte[] globals);
 
     public static Game game;
 
@@ -172,17 +172,17 @@ class Game {
 
     private void update() {
         switch (data.state) {
-            case PICKING_PLAYER -> pickPlayer();
-            case PICKING_TOOLS -> pickTools();
-            case PICKING_OPPONENT -> pickOpponent();
-            case FIGHTING -> fight();
+            case PICKING_PLAYER: pickPlayer();
+            case PICKING_TOOLS: pickTools();
+            case PICKING_OPPONENT: pickOpponent();
+            case FIGHTING: fight();
         }
     }
 
     private void pickPlayer() {
         System.out.println("You have " + data.gold + " gold\n");
 
-        ArrayList<GrugFile> humanFiles = getTypeFiles("human");
+        ArrayList<GrugFile> humanFiles = getTypeFiles("Human");
 
         if (printPlayableHumans(humanFiles)) {
             return;
@@ -297,7 +297,7 @@ class Game {
     private void pickTools() {
         System.out.println("You have " + data.gold + " gold\n");
 
-        ArrayList<GrugFile> toolFiles = getTypeFiles("tool");
+        ArrayList<GrugFile> toolFiles = getTypeFiles("Tool");
 
         if (printTools(toolFiles)) {
             return;
@@ -386,7 +386,7 @@ class Game {
     private void pickOpponent() {
         System.out.println("You have " + data.gold + " gold\n");
 
-        ArrayList<GrugFile> humanFiles = getTypeFiles("human");
+        ArrayList<GrugFile> humanFiles = getTypeFiles("Human");
 
         if (printOpponentHumans(humanFiles)) {
             return;
@@ -433,7 +433,7 @@ class Game {
         data.humanDlls[OPPONENT_INDEX] = file.dll;
 
         // Give the opponent a random tool
-        ArrayList<GrugFile> toolFiles = getTypeFiles("tool");
+        ArrayList<GrugFile> toolFiles = getTypeFiles("Tool");
         int toolIndex = rand.nextInt(toolFiles.size());
 
         file = toolFiles.get(toolIndex);
@@ -480,7 +480,7 @@ class Game {
     }
 
     private boolean callToolOnSpawn(String entity, long onFns, byte[] globals) {
-        if (!tool_has_on_spawn(onFns)) {
+        if (!Tool_has_on_spawn(onFns)) {
             System.err.println(entity + " is missing on_spawn()");
             return true;
         }
@@ -488,7 +488,7 @@ class Game {
         setToolNameCalled = false;
         setToolBuyGoldValueCalled = false;
 
-        tool_on_spawn(onFns, globals);
+        Tool_on_spawn(onFns, globals);
     
         if (!setToolNameCalled) {
             System.err.println(entity + " its on_spawn() did not call set_tool_name()");
@@ -503,7 +503,7 @@ class Game {
     }
 
     private boolean callHumanOnSpawn(String entity, long onFns, byte[] globals) {
-        if (!human_has_on_spawn(onFns)) {
+        if (!Human_has_on_spawn(onFns)) {
             System.err.println(entity + " is missing on_spawn()");
             return true;
         }
@@ -513,7 +513,7 @@ class Game {
         setHumanBuyGoldValueCalled = false;
         setHumanKillGoldValueCalled = false;
 
-        human_on_spawn(onFns, globals);
+        Human_on_spawn(onFns, globals);
 
         if (!setHumanNameCalled) {
             System.err.println(entity + " its on_spawn() did not call set_human_name()");
@@ -550,9 +550,9 @@ class Game {
         System.out.println("You have " + player.health + " health");
         System.out.println("The opponent has " + opponent.health + " health");
 
-        if (tool_has_on_use(playerTool.onFns)) {
+        if (Tool_has_on_use(playerTool.onFns)) {
             System.out.println("You use your " + playerTool.name);
-            tool_on_use(playerTool.onFns, playerToolGlobals);
+            Tool_on_use(playerTool.onFns, playerToolGlobals);
             sleep(1);
         } else {
             System.out.println("You don't know what to do with your " + playerTool.name);
@@ -569,9 +569,9 @@ class Game {
             return;
         }
 
-        if (tool_has_on_use(opponentTool.onFns)) {
+        if (Tool_has_on_use(opponentTool.onFns)) {
             System.out.println("The opponent uses their " + opponentTool.name);
-            tool_on_use(opponentTool.onFns, opponentToolGlobals);
+            Tool_on_use(opponentTool.onFns, opponentToolGlobals);
             sleep(1);
         } else {
             System.out.println("The opponent doesn't know what to do with their " + opponentTool.name);
@@ -587,14 +587,14 @@ class Game {
     }
 
     private void callToolOnDespawn(long onFns, byte[] globals) {
-        if (tool_has_on_despawn(onFns)) {
-            tool_on_despawn(onFns, globals);
+        if (Tool_has_on_despawn(onFns)) {
+            Tool_on_despawn(onFns, globals);
         }
     }
 
     private void callHumanOnDespawn(long onFns, byte[] globals) {
-        if (human_has_on_despawn(onFns)) {
-            human_on_despawn(onFns, globals);
+        if (Human_has_on_despawn(onFns)) {
+            Human_on_despawn(onFns, globals);
         }
     }
 
